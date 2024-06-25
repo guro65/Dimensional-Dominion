@@ -261,7 +261,7 @@ Camera:
   m_Enabled: 1
   serializedVersion: 2
   m_ClearFlags: 2
-  m_BackGroundColor: {r: 0.2924528, g: 0, b: 0.25240934, a: 0}
+  m_BackGroundColor: {r: 0.3962264, g: 0.0093449615, b: 0.33948386, a: 0}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
   m_FOVAxisMode: 0
@@ -353,7 +353,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -6, y: -107}
+  m_AnchoredPosition: {x: 8.3, y: -107}
   m_SizeDelta: {x: 409.0818, y: 242.7345}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &937097764
@@ -572,7 +572,7 @@ Transform:
   m_GameObject: {fileID: 1611494905}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.07, y: 2.8, z: 0}
+  m_LocalPosition: {x: 0.27, y: 2.8, z: 0}
   m_LocalScale: {x: 0.3757, y: 0.2991, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

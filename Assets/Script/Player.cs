@@ -9,8 +9,7 @@ public class Player : MonoBehaviour
     public Baralho baralho;
     public int limite = 5;
     public GameObject localDeck;
-    public float offsetX;
-    public float tempo;
+    private bool minhaVez;
     // Start is called before the first frame update
     void Start()
     {
@@ -34,5 +33,39 @@ public class Player : MonoBehaviour
             Instantiate(carta, posCarta += offset, Quaternion.identity);
             yield return new WaitForSeconds(tempo);
         }
+    }
+
+    public void MinhaVez(bool vez)
+    {
+        minhaVez = vez;
+        if(minhaVez)
+        {
+            AtivaDeck();
+        }
+        else if(!minhaVez)
+        {
+            DesativaDeck();
+        }
+    }
+
+    private void AtivaDeck()
+    {
+        foreach(GameObject carta in deck)
+        {
+            carta.gameObject.GetComponent<Carta>().AtivaCarta();
+        }
+    }
+
+    private void DesativaDeck()
+    {
+        foreach(GameObject carta in deck)
+        {
+            carta.gameObject.GetComponent<Carta>().DesativaCarta();
+        }   
+    }
+
+    public Vector3 LocalDeck()
+    {
+        return localDeck.transform.position;
     }
 }

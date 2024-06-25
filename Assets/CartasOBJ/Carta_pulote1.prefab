@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 4918572204565860062}
   - component: {fileID: 2805242238912123747}
   - component: {fileID: 4749483897735240813}
-  - component: {fileID: 5667165736411271886}
+  - component: {fileID: 2747269827688209872}
   m_Layer: 0
   m_Name: Carta_pulote1
   m_TagString: Untagged
@@ -29,7 +29,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 5.04, y: 0.06, z: 0}
-  m_LocalScale: {x: 0.1638296, y: 0.1638296, z: 1}
+  m_LocalScale: {x: 0.1650001, y: 0.1473021, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -75,7 +75,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: 21300000, guid: 3d54036bfc69cf74a805f2dfca5ba0d5, type: 3}
+  m_Sprite: {fileID: 21300000, guid: f936f9bb32e21d14995a0268319c555f, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -101,7 +101,11 @@ MonoBehaviour:
   carta: Pulote1
   dano: 15000
   defesa: 15000
---- !u!61 &5667165736411271886
+  ativa: 1
+  scalaInicial: {x: 0, y: 0, z: 0}
+  modelo: {fileID: 0}
+  clicada: 0
+--- !u!61 &2747269827688209872
 BoxCollider2D:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -133,16 +137,16 @@ BoxCollider2D:
   m_IsTrigger: 0
   m_UsedByEffector: 0
   m_UsedByComposite: 0
-  m_Offset: {x: -1.5433397, y: -1.1691976}
+  m_Offset: {x: 0, y: 0}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 32, y: 32}
+    oldSize: {x: 19.20297, y: 31.039999}
     newSize: {x: 32, y: 32}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
   serializedVersion: 2
-  m_Size: {x: 13.386389, y: 19.559746}
+  m_Size: {x: 19.20297, y: 31.039999}
   m_EdgeRadius: 0
