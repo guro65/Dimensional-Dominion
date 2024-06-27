@@ -12,6 +12,7 @@ public class Combate : MonoBehaviour
     public BoxCollider2D localCartas;
     private int vez;
     public bool aguardaVez = true;
+    public float tempoTurno;
     // Start is called before the first frame update
     void Start()
     {
@@ -28,16 +29,18 @@ public class Combate : MonoBehaviour
         if(vez == 1 && aguardaVez)
         {
             VezDoPlayer();
+            StartCoroutine("ContadorTurno");
         }
         else if(vez == 2 && aguardaVez)
         {
             VezDoOponente();
+            StartCoroutine("ContadorTurno");
         }
     }
 
     private void VezDoPlayer()
     {
-        textoIndicador.text = "Vez do jogador";
+        textoIndicador.text = "Sua vez!";
         player.MinhaVez(true);
         oponente.MinhaVez(false);
         aguardaVez = !aguardaVez;
@@ -49,5 +52,21 @@ public class Combate : MonoBehaviour
         player.MinhaVez(false);
         oponente.MinhaVez(true);
         aguardaVez = !aguardaVez;
+    }
+
+    IEnumerator ContadorTurno()
+    {
+        yield return new WaitForSeconds(tempoTurno);
+        if(vez == 1)
+        {
+           vez++; 
+        }
+        else
+        {
+            vez--;
+        }
+        
+        aguardaVez = !aguardaVez;
+        StopCoroutine("ContadorTurno");
     }
 }

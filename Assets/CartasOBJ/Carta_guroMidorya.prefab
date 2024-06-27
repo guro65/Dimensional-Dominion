@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 1273421504337872243}
   m_Layer: 0
   m_Name: Carta_guroMidorya
-  m_TagString: Untagged
+  m_TagString: Carta Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -101,9 +101,8 @@ MonoBehaviour:
   carta: Guro_Deku
   dano: 11200
   defesa: 9000
-  ativa: 1
+  ativa: 0
   scalaInicial: {x: 0, y: 0, z: 0}
-  modelo: {fileID: 0}
   clicada: 0
 --- !u!61 &1273421504337872243
 BoxCollider2D:

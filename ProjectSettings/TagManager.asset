@@ -7,6 +7,8 @@ TagManager:
   - Indicador
   - Local
   - Oponente
+  - Carta Player
+  - Carta Oponente
   layers:
   - Default
   - TransparentFX

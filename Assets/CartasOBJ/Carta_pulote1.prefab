@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 2747269827688209872}
   m_Layer: 0
   m_Name: Carta_pulote1
-  m_TagString: Untagged
+  m_TagString: Carta Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -101,9 +101,8 @@ MonoBehaviour:
   carta: Pulote1
   dano: 15000
   defesa: 15000
-  ativa: 1
+  ativa: 0
   scalaInicial: {x: 0, y: 0, z: 0}
-  modelo: {fileID: 0}
   clicada: 0
 --- !u!61 &2747269827688209872
 BoxCollider2D:

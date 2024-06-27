@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 3651480875163511249}
   m_Layer: 0
   m_Name: Carta_baan
-  m_TagString: Untagged
+  m_TagString: Carta Oponente
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -101,9 +101,8 @@ MonoBehaviour:
   carta: Baan
   dano: 3000
   defesa: 7000
-  ativa: 1
+  ativa: 0
   scalaInicial: {x: 0, y: 0, z: 0}
-  modelo: {fileID: 0}
   clicada: 0
 --- !u!61 &3651480875163511249
 BoxCollider2D:

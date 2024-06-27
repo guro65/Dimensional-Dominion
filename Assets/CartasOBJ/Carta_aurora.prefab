@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 2995750575071878489}
   m_Layer: 0
   m_Name: Carta_aurora
-  m_TagString: Untagged
+  m_TagString: Carta Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -101,9 +101,8 @@ MonoBehaviour:
   carta: Aurora
   dano: 11000
   defesa: 6750
-  ativa: 1
+  ativa: 0
   scalaInicial: {x: 0, y: 0, z: 0}
-  modelo: {fileID: 0}
   clicada: 0
 --- !u!61 &2995750575071878489
 BoxCollider2D:

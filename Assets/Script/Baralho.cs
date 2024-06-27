@@ -5,15 +5,22 @@ using UnityEngine;
 public class Baralho : MonoBehaviour
 {
     public List<GameObject> cartas = new List<GameObject>();
+    public List<GameObject> deckPlayer = new List<GameObject>();
+    public List<GameObject> deckOponente = new List<GameObject>();
     public Player player;
     public Player oponente;
     public float offsetX;
-    public float tempo;
+    public int tempo;
+    public GameObject cartaSorteada;
+    private Vector3 posCarta;
+    private Vector3 offset;
     // Start is called before the first frame update
     void Start()
     {
         player = GameObject.FindWithTag("Player").GetComponent<Player>();
         oponente = GameObject.FindWithTag("Oponente").GetComponent<Player>();
+        DeckInicialOponente();
+        DeckInicialPlayer();
     }
 
     // Update is called once per frame
@@ -22,28 +29,60 @@ public class Baralho : MonoBehaviour
         
     }
 
-    public List<GameObject> DeckInicial(int limite)
+    public List<GameObject> DeckInicial(int limite, string tipo)
     {
-        List<GameObject> deck = new List<GameObject>();
-        for(int i = 0; i < limite; i++)
+        //List<GameObject> deck = new List<GameObject>();
+        /*for(int i = 0; i < limite; i++)
         {
-            Vector3 posCarta = player.LocalDeck();
-            Vector3 offset = new Vector3(offsetX,0,0);
-            Instantiate(cartas[Random.Range(0, cartas.Count)], posCarta += offset, Quaternion.identity);
-            deck.Add();
+            //posCarta = player.LocalDeck();
+            //offset = new Vector3(offsetX,0,0);
+            //cartaSorteada = Instantiate(cartas[Random.Range(0, cartas.Count)], posCarta += offset, Quaternion.identity);
+            //cartaSorteada = cartas[Random.Range(0, cartas.Count)];
+            
+            /*if(tipo == "Player")
+            {
+                DeckInicialPlayer(limite);
+            }
+            else if(tipo == "Oponente")
+            {
+                DeckInicialOponente(limite);
+            }
+        }*/
+        
+        if(tipo == "Player")
+        {
+            return deckPlayer;
         }
-
-        return deck;
+        else if(tipo == "Oponente")
+        {
+            return deckOponente;
+        }
+        
+        return null;
     }
 
-    IEnumerator ColocarCartasNaMesa()
+    public void DeckInicialPlayer()
     {
-        Vector3 posCarta = player.LocalDeck();
-        Vector3 offset = new Vector3(offsetX,0,0);
-        foreach(GameObject carta in deck)
+        for(int i = 0; i < 5; i++)
         {
-            Instantiate(carta, posCarta += offset, Quaternion.identity);
-            yield return new WaitForSeconds(tempo);
+            
+            
+            cartaSorteada = cartas[Random.Range(0, cartas.Count)];
+            cartaSorteada.gameObject.tag = "Carta Player";
+            deckPlayer.Add(cartaSorteada);
+            
+        }
+    }
+
+    public void DeckInicialOponente()
+    {
+        for(int i = 0; i < 5; i++)
+        {
+            
+            cartaSorteada = cartas[Random.Range(0, cartas.Count)];
+            cartaSorteada.gameObject.tag = "Carta Oponente";
+            deckOponente.Add(cartaSorteada);
+            
         }
     }
 }

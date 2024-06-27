@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 3035058831554530292}
   m_Layer: 0
   m_Name: Carta_Julia
-  m_TagString: Untagged
+  m_TagString: Carta Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -103,7 +103,6 @@ MonoBehaviour:
   defesa: 2000
   ativa: 1
   scalaInicial: {x: 0, y: 0, z: 0}
-  modelo: {fileID: 0}
   clicada: 0
 --- !u!61 &3035058831554530292
 BoxCollider2D:

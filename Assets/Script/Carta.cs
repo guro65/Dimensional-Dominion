@@ -9,8 +9,8 @@ public class Carta : MonoBehaviour
     public int defesa;
     public bool ativa;
     public Vector3 scalaInicial;
-    public GameObject modelo;
     public bool clicada = false;
+
     // Start is called before the first frame update
     private void Awake() 
     {

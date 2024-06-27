@@ -5,16 +5,21 @@ using UnityEngine;
 
 public class Player : MonoBehaviour
 {
-    public List<GameObject> deck = new List<GameObject>();
+    private List<GameObject> deck = new List<GameObject>();
+    public List<GameObject> deckNaTela = new List<GameObject>();
     public Baralho baralho;
     public int limite = 5;
     public GameObject localDeck;
-    private bool minhaVez;
+    public bool minhaVez;
+    public float offsetX;
+    public float tempo;
+    public string tipo;
+
     // Start is called before the first frame update
     void Start()
     {
         baralho = GameObject.Find("Baralho").GetComponent<Baralho>();
-        deck = baralho.DeckInicial(limite);
+        deck = baralho.DeckInicial(limite, tipo);
         StartCoroutine("ColocarCartasNaMesa");
     }
 
@@ -33,16 +38,41 @@ public class Player : MonoBehaviour
             Instantiate(carta, posCarta += offset, Quaternion.identity);
             yield return new WaitForSeconds(tempo);
         }
+
+        yield return new WaitForSeconds(1.0f);
+
+        PegaCartasNaTela();
+    }
+
+    private void PegaCartasNaTela()
+    {
+        GameObject[] cartasNoJogo = new GameObject[limite];
+        
+        if(tipo == "Player")
+        {
+            cartasNoJogo = GameObject.FindGameObjectsWithTag("Carta Player");
+        }
+        else if(tipo == "Oponente")
+        {
+            cartasNoJogo = GameObject.FindGameObjectsWithTag("Carta Oponente");
+        }
+
+        foreach(GameObject carta in cartasNoJogo) 
+        {
+            deckNaTela.Add(carta);
+        }
+        
     }
 
     public void MinhaVez(bool vez)
     {
         minhaVez = vez;
-        if(minhaVez)
+
+        if(vez)
         {
             AtivaDeck();
         }
-        else if(!minhaVez)
+        else if(!vez)
         {
             DesativaDeck();
         }
@@ -50,7 +80,7 @@ public class Player : MonoBehaviour
 
     private void AtivaDeck()
     {
-        foreach(GameObject carta in deck)
+        foreach(GameObject carta in deckNaTela)
         {
             carta.gameObject.GetComponent<Carta>().AtivaCarta();
         }
@@ -58,7 +88,7 @@ public class Player : MonoBehaviour
 
     private void DesativaDeck()
     {
-        foreach(GameObject carta in deck)
+        foreach(GameObject carta in deckNaTela)
         {
             carta.gameObject.GetComponent<Carta>().DesativaCarta();
         }   

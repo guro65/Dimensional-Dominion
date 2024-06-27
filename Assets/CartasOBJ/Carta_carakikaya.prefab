@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 6347963699680039935}
   m_Layer: 0
   m_Name: Carta_carakikaya
-  m_TagString: Untagged
+  m_TagString: Carta Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -103,7 +103,6 @@ MonoBehaviour:
   defesa: 10000
   ativa: 1
   scalaInicial: {x: 0, y: 0, z: 0}
-  modelo: {fileID: 0}
   clicada: 0
 --- !u!61 &6347963699680039935
 BoxCollider2D:
