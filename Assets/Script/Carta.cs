@@ -10,11 +10,13 @@ public class Carta : MonoBehaviour
     public bool ativa;
     public Vector3 scalaInicial;
     public bool clicada = false;
+    public SpriteRenderer sprite;
 
     // Start is called before the first frame update
     private void Awake() 
     {
-        ativa = false;
+        ativa = true;
+        sprite = GetComponent<SpriteRenderer>();
     }
     void Start()
     {
@@ -41,7 +43,8 @@ public class Carta : MonoBehaviour
     {
         if(ativa)
         {
-            transform.localScale = new Vector3(0.2f, 0.2f, 0);
+            transform.localScale = new Vector3(0.15f, 0.15f, 0);
+            sprite.sortingOrder = 1;
         }
         
     }
@@ -51,6 +54,7 @@ public class Carta : MonoBehaviour
         if(ativa && !clicada) 
         {
             transform.localScale = scalaInicial;
+            sprite.sortingOrder = 0;
         }
         
     }
@@ -60,17 +64,24 @@ public class Carta : MonoBehaviour
         if(ativa && !clicada)
         {
             clicada = true;
-            transform.localScale = new Vector3(0.2f, 0.2f, 0);
+            transform.localScale = new Vector3(0.15f, 0.15f, 0);
+            sprite.sortingOrder = 1;
         }
         else if(ativa && clicada)
         {
             clicada = false;
             transform.localScale = scalaInicial;
+            sprite.sortingOrder = 0;
         }
     }
 
     public bool CartaClicada()
     {
         return clicada;
+    }
+
+    public bool VerificaCartaAtiva()
+    {
+        return ativa;
     }
 }

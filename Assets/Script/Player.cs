@@ -98,4 +98,9 @@ public class Player : MonoBehaviour
     {
         return localDeck.transform.position;
     }
+
+    public List<GameObject> DeckNaTela()
+    {
+        return deckNaTela;
+    }
 }

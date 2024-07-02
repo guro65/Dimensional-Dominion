@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 2641896959586436481}
   m_Layer: 0
   m_Name: Carta_Chrono
-  m_TagString: Carta Oponente
+  m_TagString: Carta Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -29,7 +29,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 6.618125, y: -2.406513, z: 0}
-  m_LocalScale: {x: 0.1650001, y: 0.1473021, z: 1}
+  m_LocalScale: {x: 0.1, y: 0.1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -104,6 +104,7 @@ MonoBehaviour:
   ativa: 1
   scalaInicial: {x: 0, y: 0, z: 0}
   clicada: 0
+  sprite: {fileID: 0}
 --- !u!61 &2641896959586436481
 BoxCollider2D:
   m_ObjectHideFlags: 0

@@ -14,6 +14,7 @@ public class Baralho : MonoBehaviour
     public GameObject cartaSorteada;
     private Vector3 posCarta;
     private Vector3 offset;
+    public int limite = 5;
     // Start is called before the first frame update
     void Start()
     {
@@ -63,25 +64,31 @@ public class Baralho : MonoBehaviour
 
     public void DeckInicialPlayer()
     {
-        for(int i = 0; i < 5; i++)
+        Vector3 posCarta = player.LocalDeck();
+        Vector3 offset = new Vector3(offsetX,0,0);
+        for(int i = 0; i < limite; i++)
         {
             
             
             cartaSorteada = cartas[Random.Range(0, cartas.Count)];
             cartaSorteada.gameObject.tag = "Carta Player";
-            deckPlayer.Add(cartaSorteada);
+            Instantiate(cartaSorteada,posCarta += offset,Quaternion.identity);
+            //deckPlayer.Add(cartaSorteada);
             
         }
     }
 
     public void DeckInicialOponente()
     {
-        for(int i = 0; i < 5; i++)
+        Vector3 posCarta = oponente.LocalDeck();
+        Vector3 offset = new Vector3(offsetX,0,0);
+        for(int i = 0; i < limite; i++)
         {
             
             cartaSorteada = cartas[Random.Range(0, cartas.Count)];
             cartaSorteada.gameObject.tag = "Carta Oponente";
-            deckOponente.Add(cartaSorteada);
+            Instantiate(cartaSorteada,posCarta += offset,Quaternion.identity);
+            //deckOponente.Add(cartaSorteada);
             
         }
     }

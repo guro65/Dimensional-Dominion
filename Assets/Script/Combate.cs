@@ -10,6 +10,8 @@ public class Combate : MonoBehaviour
     public Player oponente;
     public TextMeshProUGUI textoIndicador;
     public BoxCollider2D localCartas;
+    public GameObject cartaAtivaPlayer;
+    public GameObject cartaAtivaOponente;
     private int vez;
     public bool aguardaVez = true;
     public float tempoTurno;
@@ -57,16 +59,63 @@ public class Combate : MonoBehaviour
     IEnumerator ContadorTurno()
     {
         yield return new WaitForSeconds(tempoTurno);
+        FinalizarTurno();
+    }
+
+    public void FinalizarTurno()
+    {   
         if(vez == 1)
         {
            vez++; 
+           VerificaCartaAtivaPlayer();
+           MudaPosicaoCartaPlayer();
         }
         else
         {
             vez--;
+            VerificaCartaAtivaOponente();
+            MudaPosicaoCartaOponente();
         }
-        
+
         aguardaVez = !aguardaVez;
         StopCoroutine("ContadorTurno");
+    }
+
+    public void VerificaCartaAtivaPlayer()
+    {
+        List<GameObject> deckPlayer = player.DeckNaTela();
+        foreach(GameObject carta in deckPlayer)
+        {
+            Carta cartaAtual = carta.GetComponent<Carta>();
+            if(cartaAtual.CartaClicada())
+            {
+                cartaAtivaPlayer = carta;
+            }
+        }
+    }
+
+    public void VerificaCartaAtivaOponente()
+    {
+        List<GameObject> deckOponente = oponente.DeckNaTela();
+        foreach(GameObject carta in deckOponente)
+        {
+            Carta cartaAtual = carta.GetComponent<Carta>();
+            if(cartaAtual.CartaClicada())
+            {
+                cartaAtivaOponente = carta;
+            }
+        }
+    }
+
+    public void MudaPosicaoCartaPlayer()
+    {
+        float posCartaX = localCartas.transform.position.x + 2.3f;
+        cartaAtivaPlayer.transform.position = new Vector3(posCartaX,localCartas.transform.position.y,0);
+    }
+
+    public void MudaPosicaoCartaOponente()
+    {
+        float posCartaX = localCartas.transform.position.x + -1.9f;
+        cartaAtivaOponente.transform.position = new Vector3(posCartaX,localCartas.transform.position.y,0);
     }
 }
