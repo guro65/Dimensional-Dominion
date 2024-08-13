@@ -11,4 +11,13 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Jogo.unity
     guid: 08cdc51487eb92b4db628c16bc75ce7e
+  - enabled: 1
+    path: Assets/Scenes/Cartas.unity
+    guid: 55d8ff114cdb6954bb9a036f8fb438d7
+  - enabled: 1
+    path: Assets/Scenes/Cartas2.unity
+    guid: b7917acce464f9142a5916ba750ef4d9
+  - enabled: 1
+    path: Assets/Scenes/Creditos.unity
+    guid: ff84bc30076eb3a4a9766d3dad537ae0
   m_configObjects: {}
