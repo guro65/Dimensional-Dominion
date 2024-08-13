@@ -56,5 +56,5 @@
         "temp/": true,
         "Temp/": true
     },
-    "dotnet.defaultSolution": "Akame-kill.sln"
+    "dotnet.defaultSolution": "Dimensional-Dominion.sln"
 }
