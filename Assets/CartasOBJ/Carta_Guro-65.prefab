@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 3817681514364111061}
   m_Layer: 0
   m_Name: Carta_Guro-65
-  m_TagString: Carta Oponente
+  m_TagString: Carta Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -74,7 +74,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 1
   m_Sprite: {fileID: 21300000, guid: 893f539295e3222468063ac8e36998a4, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -99,8 +99,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   carta: Guro_65
-  dano: 30000
-  defesa: 17500
+  dano: 5000
+  defesa: 6000
   ativa: 0
   scalaInicial: {x: 0, y: 0, z: 0}
   clicada: 0

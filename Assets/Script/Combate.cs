@@ -15,6 +15,7 @@ public class Combate : MonoBehaviour
     private int vez;
     public bool aguardaVez = true;
     public float tempoTurno;
+     
     // Start is called before the first frame update
     void Start()
     {

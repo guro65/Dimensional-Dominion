@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 4393293033614532066}
   m_Layer: 0
   m_Name: Carta_rika
-  m_TagString: Carta Player
+  m_TagString: Carta Oponente
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -74,7 +74,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 1
   m_Sprite: {fileID: 21300000, guid: e078e0878215d5647937091455ec5e61, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -99,8 +99,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   carta: Rika
-  dano: 6500
-  defesa: 3400
+  dano: 4000
+  defesa: 6400
   ativa: 0
   scalaInicial: {x: 0, y: 0, z: 0}
   clicada: 0

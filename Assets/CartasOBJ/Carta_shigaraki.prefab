@@ -74,7 +74,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 1
   m_Sprite: {fileID: 21300000, guid: 580272670ec54464b8844641a1e2c3bd, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -99,8 +99,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   carta: Shigaraki
-  dano: 12000
-  defesa: 9000
+  dano: 2222
+  defesa: 4444
   ativa: 0
   scalaInicial: {x: 0, y: 0, z: 0}
   clicada: 0

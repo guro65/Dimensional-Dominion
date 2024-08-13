@@ -854,9 +854,9 @@ RectTransform:
   - {fileID: 628172016}
   m_Father: {fileID: 964576034}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.22252086, y: 0.5}
-  m_AnchorMax: {x: 0.22252086, y: 0.5}
-  m_AnchoredPosition: {x: -226.40472, y: -390.8224}
+  m_AnchorMin: {x: 0.136, y: 0.29070365}
+  m_AnchorMax: {x: 0.136, y: 0.29070365}
+  m_AnchoredPosition: {x: -96, y: -149}
   m_SizeDelta: {x: 197.4112, y: 301.2919}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &976620270
@@ -1266,6 +1266,14 @@ MonoBehaviour:
   - {fileID: 6355609365486868099, guid: dfc3409c1da36794ca3b3229e3ec62f4, type: 3}
   - {fileID: 3282596770532777126, guid: 4f7f238844d9e79448181c525af3c353, type: 3}
   - {fileID: 1260956424658759083, guid: ea46d9e0a8837fe44b2e487234acfea3, type: 3}
+  - {fileID: 6578407845203804528, guid: f0f01b86c282d134d8e90b16721f47f3, type: 3}
+  - {fileID: 8897057951384124107, guid: 8739f7e71844bc64eaea723a889505a9, type: 3}
+  - {fileID: 3712311969408344988, guid: 93ed294a901ca8a4f8b0de100652d919, type: 3}
+  - {fileID: 8733386372157539091, guid: b94980f1bef8ff24e9f43f0e6def8a84, type: 3}
+  - {fileID: 2658857972706334232, guid: bdb7a4f33e76e624288d83e4858b5674, type: 3}
+  - {fileID: 2422697391326862320, guid: 2020ee25de8d6dd4e94ad98b244b8b4f, type: 3}
+  - {fileID: 1726025898884295900, guid: d92757e829273db46ae6e9821160e727, type: 3}
+  - {fileID: 5045979170356529238, guid: a0466e2dd568371418265138abc10bb1, type: 3}
   deckPlayer: []
   deckOponente: []
   player: {fileID: 0}

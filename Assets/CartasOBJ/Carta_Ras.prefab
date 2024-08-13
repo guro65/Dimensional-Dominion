@@ -73,7 +73,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 1
   m_Sprite: {fileID: 21300000, guid: c7f3068289b0f5a49a81a8b8d57b08de, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -99,7 +99,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   carta: Ras
   dano: 3300
-  defesa: 5000
+  defesa: 6500
   ativa: 1
   scalaInicial: {x: 0, y: 0, z: 0}
   clicada: 0
+  sprite: {fileID: 0}

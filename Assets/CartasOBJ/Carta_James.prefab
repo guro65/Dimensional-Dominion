@@ -149,3 +149,4 @@ MonoBehaviour:
   ativa: 1
   scalaInicial: {x: 0, y: 0, z: 0}
   clicada: 0
+  sprite: {fileID: 0}
