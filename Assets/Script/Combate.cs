@@ -2,7 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
-using UnityEngine.UIElements;
+using UnityEngine.SceneManagement; // Para mudar de cena
+using UnityEngine.UI; // Para usar o UI
 
 public class Combate : MonoBehaviour
 {
@@ -10,51 +11,98 @@ public class Combate : MonoBehaviour
     public Player oponente;
     public TextMeshProUGUI textoIndicador;
     public BoxCollider2D localCartas;
-    public GameObject cartaAtivaPlayer;
-    public GameObject cartaAtivaOponente;
+    public GameObject textoBotao;
+    public GameObject painelResultado; // Painel de Resultado
+    public TextMeshProUGUI textoResultado; // Texto do Painel de Resultado
+    public Button botaoMudarCena; // Botão para mudar de cena
+
+    private GameObject cartaAtivaPlayer;
+    private GameObject cartaAtivaOponente;
     private int vez;
     public bool aguardaVez = true;
     public float tempoTurno;
-     
-    // Start is called before the first frame update
+    private bool cartaOponenteSelecionada = false;
+
     void Start()
     {
         player = GameObject.FindWithTag("Player").GetComponent<Player>();
         oponente = GameObject.FindWithTag("Oponente").GetComponent<Player>();
         textoIndicador = GameObject.FindWithTag("Indicador").GetComponent<TextMeshProUGUI>();
         localCartas = GameObject.FindWithTag("Local").GetComponent<BoxCollider2D>();
+        textoBotao = GameObject.FindWithTag("TextoBotao");
+        painelResultado.SetActive(false); // Inicialmente escondido
+        botaoMudarCena.onClick.AddListener(MudarCena);
         vez = 1;
+        AtualizaTextoBotao("Inicie o Turno");
     }
 
-    // Update is called once per frame
     void Update()
     {
-        if(vez == 1 && aguardaVez)
+        if (aguardaVez)
         {
-            VezDoPlayer();
-            StartCoroutine("ContadorTurno");
+            if (vez == 1)
+            {
+                VezDoPlayer();
+            }
+            else if (vez == 2)
+            {
+                if (!cartaOponenteSelecionada)
+                {
+                    textoIndicador.text = "Aguarde o oponente jogar";
+                    AtualizaTextoBotao("Oponente Jogar");
+                }
+            }
+            else if (vez == 3)
+            {
+                FimdoTurno();
+            }
         }
-        else if(vez == 2 && aguardaVez)
+    }
+
+    public void JogarCartaOponente()
+    {
+        if (vez == 2)
         {
-            VezDoOponente();
-            StartCoroutine("ContadorTurno");
+            if (cartaAtivaOponente == null)
+            {
+                cartaAtivaOponente = EscolherCartaAleatoria(oponente);
+                if (cartaAtivaOponente != null)
+                {
+                    cartaOponenteSelecionada = true;
+                    MudaPosicaoCartaOponente();
+                    StartCoroutine(ContadorTurno());
+                }
+                else
+                {
+                    textoIndicador.text = "Nenhuma carta disponível para o oponente.";
+                    AtualizaTextoBotao("Inicie o próximo turno");
+                    aguardaVez = false;
+                    cartaOponenteSelecionada = true;
+                }
+            }
         }
     }
 
     private void VezDoPlayer()
     {
-        textoIndicador.text = "Sua vez!";
-        player.MinhaVez(true);
-        oponente.MinhaVez(false);
-        aguardaVez = !aguardaVez;
+        if (cartaAtivaPlayer == null)
+        {
+            textoIndicador.text = "Sua vez! Selecione sua carta";
+            AtualizaTextoBotao("Continuar");
+            aguardaVez = false;
+        }
+        else
+        {
+            textoIndicador.text = "Você já tem uma carta ativa.";
+            AtualizaTextoBotao("Aguarde o oponente");
+        }
     }
 
-    private void VezDoOponente()
+    private void FimdoTurno()
     {
-        textoIndicador.text = "Vez do oponente";
-        player.MinhaVez(false);
-        oponente.MinhaVez(true);
-        aguardaVez = !aguardaVez;
+        textoIndicador.text = "Fim do Turno";
+        AtualizaTextoBotao("Aguarde...");
+        aguardaVez = false;
     }
 
     IEnumerator ContadorTurno()
@@ -64,59 +112,153 @@ public class Combate : MonoBehaviour
     }
 
     public void FinalizarTurno()
-    {   
-        if(vez == 1)
+    {
+        StopCoroutine(ContadorTurno());
+
+        if (vez == 1)
         {
-           vez++; 
-           VerificaCartaAtivaPlayer();
-           MudaPosicaoCartaPlayer();
+            vez++;
+            VerificaCartaAtivaPlayer();
+            if (cartaAtivaPlayer != null)
+            {
+                MudaPosicaoCartaPlayer();
+            }
         }
-        else
+        else if (vez == 2)
         {
-            vez--;
-            VerificaCartaAtivaOponente();
-            MudaPosicaoCartaOponente();
+            vez++;
+            cartaOponenteSelecionada = false;
+        }
+        else if (vez == 3)
+        {
+            vez = 1;
+            FinalizaCombate();
+            FimdoTurno();
         }
 
-        aguardaVez = !aguardaVez;
-        StopCoroutine("ContadorTurno");
+        aguardaVez = true;
+        AtualizaTextoBotao("Inicie o Turno");
+    }
+
+    private void FinalizaCombate()
+    {
+        if (cartaAtivaPlayer != null && cartaAtivaOponente != null)
+        {
+            Carta cartaPlayer = cartaAtivaPlayer.GetComponent<Carta>();
+            Carta cartaOponente = cartaAtivaOponente.GetComponent<Carta>();
+
+            cartaOponente.CalculaDano(cartaPlayer.DanoCarta());
+            cartaPlayer.CalculaDano(cartaOponente.DanoCarta());
+
+            if (cartaPlayer.defesa <= 0)
+            {
+                Destroy(cartaAtivaPlayer);
+                cartaAtivaPlayer = null;
+                VerificaVitoria();
+            }
+
+            if (cartaOponente.defesa <= 0)
+            {
+                Destroy(cartaAtivaOponente);
+                cartaAtivaOponente = null;
+                VerificaDerrota();
+            }
+        }
+    }
+
+    private void VerificaVitoria()
+    {
+        if (oponente.DeckNaTela().Count == 0)
+        {
+            MostrarResultado("Você venceu!");
+        }
+    }
+
+    private void VerificaDerrota()
+    {
+        if (player.DeckNaTela().Count == 0)
+        {
+            MostrarResultado("Você perdeu!");
+        }
+    }
+
+    private void VerificaEmpate()
+    {
+        if (oponente.DeckNaTela().Count == 0 && player.DeckNaTela().Count == 0)
+        {
+            MostrarResultado("Empate!");
+        }
+    }
+
+    private void MostrarResultado(string resultado)
+    {
+        textoResultado.text = resultado;
+        painelResultado.SetActive(true);
+        AtualizaTextoBotao(""); // Desativa o texto do botão enquanto exibe o painel
+        StopAllCoroutines(); // Para qualquer corrotina que esteja rodando
+        aguardaVez = false;
+    }
+
+    public void MudarCena()
+    {
+        SceneManager.LoadScene("Menu"); // Substitua pelo nome da sua cena
+    }
+
+    private GameObject EscolherCartaAleatoria(Player jogador)
+    {
+        List<GameObject> deck = jogador.DeckNaTela();
+        if (deck != null && deck.Count > 0)
+        {
+            int indiceAleatorio = Random.Range(0, deck.Count);
+            Debug.Log("Carta escolhida: " + deck[indiceAleatorio].name);
+            return deck[indiceAleatorio];
+        }
+        Debug.Log("Nenhuma carta disponível no deck.");
+        return null;
     }
 
     public void VerificaCartaAtivaPlayer()
     {
         List<GameObject> deckPlayer = player.DeckNaTela();
-        foreach(GameObject carta in deckPlayer)
+        cartaAtivaPlayer = null;
+        foreach (GameObject carta in deckPlayer)
         {
-            Carta cartaAtual = carta.GetComponent<Carta>();
-            if(cartaAtual.CartaClicada())
+            if (carta != null)
             {
-                cartaAtivaPlayer = carta;
-            }
-        }
-    }
-
-    public void VerificaCartaAtivaOponente()
-    {
-        List<GameObject> deckOponente = oponente.DeckNaTela();
-        foreach(GameObject carta in deckOponente)
-        {
-            Carta cartaAtual = carta.GetComponent<Carta>();
-            if(cartaAtual.CartaClicada())
-            {
-                cartaAtivaOponente = carta;
+                Carta cartaAtual = carta.GetComponent<Carta>();
+                if (cartaAtual != null && cartaAtual.CartaClicada())
+                {
+                    cartaAtivaPlayer = carta;
+                    cartaAtual.DesativaCarta();
+                    break;
+                }
             }
         }
     }
 
     public void MudaPosicaoCartaPlayer()
     {
-        float posCartaX = localCartas.transform.position.x + 2.3f;
-        cartaAtivaPlayer.transform.position = new Vector3(posCartaX,localCartas.transform.position.y,0);
+        if (cartaAtivaPlayer != null)
+        {
+            float posCartaX = localCartas.transform.position.x + 2.3f;
+            cartaAtivaPlayer.transform.position = new Vector3(posCartaX, localCartas.transform.position.y, 0);
+        }
     }
 
     public void MudaPosicaoCartaOponente()
     {
-        float posCartaX = localCartas.transform.position.x + -1.9f;
-        cartaAtivaOponente.transform.position = new Vector3(posCartaX,localCartas.transform.position.y,0);
+        if (cartaAtivaOponente != null)
+        {
+            float posCartaX = localCartas.transform.position.x - 1.9f;
+            cartaAtivaOponente.transform.position = new Vector3(posCartaX, localCartas.transform.position.y, 0);
+        }
+    }
+
+    private void AtualizaTextoBotao(string texto)
+    {
+        if (textoBotao != null)
+        {
+            textoBotao.GetComponent<TextMeshProUGUI>().text = texto;
+        }
     }
 }

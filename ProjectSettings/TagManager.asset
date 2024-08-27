@@ -9,6 +9,7 @@ TagManager:
   - Oponente
   - Carta Player
   - Carta Oponente
+  - TextoBotao
   layers:
   - Default
   - TransparentFX

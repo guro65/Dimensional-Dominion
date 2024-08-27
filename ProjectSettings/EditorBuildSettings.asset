@@ -7,7 +7,7 @@ EditorBuildSettings:
   m_Scenes:
   - enabled: 1
     path: Assets/Scenes/Menu.unity
-    guid: 2cda990e2423bbf4892e6590ba056729
+    guid: 1678cb2211f5d7443888c3f32322eb08
   - enabled: 1
     path: Assets/Scenes/Jogo.unity
     guid: 08cdc51487eb92b4db628c16bc75ce7e
@@ -17,7 +17,4 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Cartas2.unity
     guid: b7917acce464f9142a5916ba750ef4d9
-  - enabled: 1
-    path: Assets/Scenes/Creditos.unity
-    guid: ff84bc30076eb3a4a9766d3dad537ae0
   m_configObjects: {}

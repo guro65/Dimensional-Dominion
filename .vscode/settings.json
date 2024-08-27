@@ -56,5 +56,5 @@
         "temp/": true,
         "Temp/": true
     },
-    "dotnet.defaultSolution": "Dimensional-Dominion.sln"
+    "dotnet.defaultSolution": "jogo-uc-5-guro65.sln"
 }
