@@ -21,6 +21,10 @@ public class Menu : MonoBehaviour
     {
         SceneManager.LoadScene("Cartas2");
     }
+    public void Artes2()
+    {
+        SceneManager.LoadScene("Cartas3");
+    }
     public void MenuPrincipal()
     {
         SceneManager.LoadScene("Menu");

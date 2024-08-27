@@ -17,4 +17,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Cartas2.unity
     guid: b7917acce464f9142a5916ba750ef4d9
+  - enabled: 1
+    path: Assets/Scenes/Cartas3.unity
+    guid: 50e4fb3212d77204e8eb9af5705a70ef
   m_configObjects: {}
