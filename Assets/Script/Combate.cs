@@ -194,14 +194,14 @@ public class Combate : MonoBehaviour
     {
         textoResultado.text = resultado;
         painelResultado.SetActive(true);
-        AtualizaTextoBotao(""); // Desativa o texto do botão enquanto exibe o painel
-        StopAllCoroutines(); // Para qualquer corrotina que esteja rodando
+        AtualizaTextoBotao("");
+        StopAllCoroutines();
         aguardaVez = false;
     }
 
     public void MudarCena()
     {
-        SceneManager.LoadScene("Menu"); // Substitua pelo nome da sua cena
+        SceneManager.LoadScene("Menu");
     }
 
     private GameObject EscolherCartaAleatoria(Player jogador)
