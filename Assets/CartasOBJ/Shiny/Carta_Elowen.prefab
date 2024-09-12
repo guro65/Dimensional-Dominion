@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 7166848492418782409}
   m_Layer: 0
   m_Name: Carta_Elowen
-  m_TagString: Untagged
+  m_TagString: Carta Oponente
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

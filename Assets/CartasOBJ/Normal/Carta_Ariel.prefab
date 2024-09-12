@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 7609164511291106382}
   m_Layer: 0
   m_Name: Carta_Ariel
-  m_TagString: Untagged
+  m_TagString: Carta Oponente
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

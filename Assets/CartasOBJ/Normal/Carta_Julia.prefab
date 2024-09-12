@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 3035058831554530292}
   m_Layer: 0
   m_Name: Carta_Julia
-  m_TagString: Carta Player
+  m_TagString: Carta Oponente
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

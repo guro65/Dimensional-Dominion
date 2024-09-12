@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 4632968425179816380}
   m_Layer: 0
   m_Name: Carta_Pulote_Skin
-  m_TagString: Carta Player
+  m_TagString: Carta Oponente
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

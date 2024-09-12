@@ -15,14 +15,17 @@ public class Combate : MonoBehaviour
     public GameObject painelResultado; // Painel de Resultado
     public TextMeshProUGUI textoResultado; // Texto do Painel de Resultado
     public Button botaoMudarCena; // Botão para mudar de cena
-
+    public Button botaoReplay;
     private GameObject cartaAtivaPlayer;
     private GameObject cartaAtivaOponente;
     private int vez;
     public bool aguardaVez = true;
     public float tempoTurno;
     private bool cartaOponenteSelecionada = false;
-
+    //[SerializeField] private TextMeshProUGUI vitorias;
+    //[SerializeField] private float tempoDoTurno;
+    public int cartasPlayer = 5;
+    public int cartasOponente = 5;
     void Start()
     {
         player = GameObject.FindWithTag("Player").GetComponent<Player>();
@@ -31,9 +34,11 @@ public class Combate : MonoBehaviour
         localCartas = GameObject.FindWithTag("Local").GetComponent<BoxCollider2D>();
         textoBotao = GameObject.FindWithTag("TextoBotao");
         painelResultado.SetActive(false); // Inicialmente escondido
-        botaoMudarCena.onClick.AddListener(MudarCena);
+        botaoMudarCena.onClick.AddListener(Voltar);
+        botaoReplay.onClick.AddListener(Replay);
         vez = 1;
         AtualizaTextoBotao("Inicie o Turno");
+        //vitorias = GameObject.Find("Vitorias").GetComponent<TextMeshProUGUI>();
     }
 
     void Update()
@@ -57,9 +62,12 @@ public class Combate : MonoBehaviour
                 FimdoTurno();
             }
         }
+
+        VerificaDerrota();
+        VerificaVitoria();
     }
 
-    public void JogarCartaOponente()
+    /*public void JogarCartaOponente()
     {
         if (vez == 2)
         {
@@ -81,7 +89,7 @@ public class Combate : MonoBehaviour
                 }
             }
         }
-    }
+    }*/
 
     private void VezDoPlayer()
     {
@@ -128,6 +136,23 @@ public class Combate : MonoBehaviour
         {
             vez++;
             cartaOponenteSelecionada = false;
+            if (cartaAtivaOponente == null)
+            {
+                cartaAtivaOponente = EscolherCartaAleatoria(oponente);
+                if (cartaAtivaOponente != null)
+                {
+                    cartaOponenteSelecionada = true;
+                    MudaPosicaoCartaOponente();
+                    StartCoroutine(ContadorTurno());
+                }
+                else
+                {
+                    textoIndicador.text = "Nenhuma carta disponível para o oponente.";
+                    AtualizaTextoBotao("Inicie o próximo turno");
+                    aguardaVez = false;
+                    cartaOponenteSelecionada = true;
+                }
+            }
         }
         else if (vez == 3)
         {
@@ -135,7 +160,7 @@ public class Combate : MonoBehaviour
             FinalizaCombate();
             FimdoTurno();
         }
-
+        
         aguardaVez = true;
         AtualizaTextoBotao("Inicie o Turno");
     }
@@ -154,6 +179,7 @@ public class Combate : MonoBehaviour
             {
                 Destroy(cartaAtivaPlayer);
                 cartaAtivaPlayer = null;
+                cartasPlayer--;
                 VerificaVitoria();
             }
 
@@ -161,6 +187,7 @@ public class Combate : MonoBehaviour
             {
                 Destroy(cartaAtivaOponente);
                 cartaAtivaOponente = null;
+                cartasOponente--;
                 VerificaDerrota();
             }
         }
@@ -168,7 +195,7 @@ public class Combate : MonoBehaviour
 
     private void VerificaVitoria()
     {
-        if (oponente.DeckNaTela().Count == 0)
+        if (cartasOponente <= 0)
         {
             MostrarResultado("Você venceu!");
         }
@@ -176,7 +203,7 @@ public class Combate : MonoBehaviour
 
     private void VerificaDerrota()
     {
-        if (player.DeckNaTela().Count == 0)
+        if (cartasPlayer <= 0)
         {
             MostrarResultado("Você perdeu!");
         }
@@ -184,7 +211,7 @@ public class Combate : MonoBehaviour
 
     private void VerificaEmpate()
     {
-        if (oponente.DeckNaTela().Count == 0 && player.DeckNaTela().Count == 0)
+        if (cartasOponente <= 0 && cartasPlayer <= 0)
         {
             MostrarResultado("Empate!");
         }
@@ -192,16 +219,21 @@ public class Combate : MonoBehaviour
 
     private void MostrarResultado(string resultado)
     {
-        textoResultado.text = resultado;
         painelResultado.SetActive(true);
+        textoResultado.text = resultado;
         AtualizaTextoBotao("");
         StopAllCoroutines();
         aguardaVez = false;
     }
 
-    public void MudarCena()
+    public void Voltar()
     {
         SceneManager.LoadScene("Menu");
+    }
+
+    public void Replay()
+    {
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
     private GameObject EscolherCartaAleatoria(Player jogador)

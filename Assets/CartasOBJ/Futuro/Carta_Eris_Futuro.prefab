@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 8749804466543403319}
   m_Layer: 0
   m_Name: Carta_Eris_Futuro
-  m_TagString: Carta Oponente
+  m_TagString: Carta Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

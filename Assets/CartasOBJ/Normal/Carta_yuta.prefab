@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 1303014132505196623}
   m_Layer: 0
   m_Name: Carta_yuta
-  m_TagString: Carta Oponente
+  m_TagString: Carta Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
