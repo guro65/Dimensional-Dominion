@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 3010316347575059364}
   m_Layer: 0
   m_Name: Carta_Eris
-  m_TagString: Carta Oponente
+  m_TagString: Carta Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -75,7 +75,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 1
-  m_Sprite: {fileID: 21300000, guid: d8bac725f0927f844bc43db95753a22a, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 02b013d39a23e9644b29680a35b7b78a, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -99,12 +99,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   carta: Eris
+  nomeEvolucao: 
+  cartaEvolutivaPrefab: {fileID: 0}
   dano: 3000
-  defesa: 5500
+  defesa: 10500
   ativa: 0
   scalaInicial: {x: 0, y: 0, z: 0}
   clicada: 0
+  evoluida: 0
   sprite: {fileID: 0}
+  statusDefesa: {fileID: 0}
+  statusDano: {fileID: 0}
+  statusNome: {fileID: 0}
 --- !u!61 &3010316347575059364
 BoxCollider2D:
   m_ObjectHideFlags: 0

@@ -75,7 +75,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 1
-  m_Sprite: {fileID: 21300000, guid: 9effbd0c07d28d3448987921528c3239, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 99e81d44f74901647b55f095f97788a1, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -99,12 +99,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   carta: Geovana_Skin
-  dano: 6700
+  nomeEvolucao: 
+  cartaEvolutivaPrefab: {fileID: 0}
+  dano: 16753
   defesa: 11000
   ativa: 1
   scalaInicial: {x: 0, y: 0, z: 0}
   clicada: 0
+  evoluida: 0
   sprite: {fileID: 0}
+  statusDefesa: {fileID: 0}
+  statusDano: {fileID: 0}
+  statusNome: {fileID: 0}
 --- !u!61 &4392532677563267095
 BoxCollider2D:
   m_ObjectHideFlags: 0

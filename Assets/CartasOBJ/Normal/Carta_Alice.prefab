@@ -75,7 +75,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 1
-  m_Sprite: {fileID: 21300000, guid: 559f1a029b5935d4da0b3c6dc90f6b83, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 7872dc3e4a822744e89d7184b6444c48, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -99,12 +99,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   carta: Alice
-  dano: 3000
+  nomeEvolucao: 
+  cartaEvolutivaPrefab: {fileID: 0}
+  dano: 5000
   defesa: 7000
   ativa: 1
   scalaInicial: {x: 0, y: 0, z: 0}
   clicada: 0
+  evoluida: 0
   sprite: {fileID: 0}
+  statusDefesa: {fileID: 0}
+  statusDano: {fileID: 0}
+  statusNome: {fileID: 0}
 --- !u!61 &3844761133096202173
 BoxCollider2D:
   m_ObjectHideFlags: 0

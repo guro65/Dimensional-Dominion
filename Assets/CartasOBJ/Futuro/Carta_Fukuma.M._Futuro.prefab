@@ -10,8 +10,8 @@ GameObject:
   m_Component:
   - component: {fileID: 5284737974610643569}
   - component: {fileID: 3161835095738814296}
-  - component: {fileID: 544572979512838271}
   - component: {fileID: 8440759206647087860}
+  - component: {fileID: 544572979512838271}
   m_Layer: 0
   m_Name: Carta_Fukuma.M._Futuro
   m_TagString: Carta Player
@@ -74,8 +74,8 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
-  m_Sprite: {fileID: 21300000, guid: dee7520e1f7adb548a06bc30254f4592, type: 3}
+  m_SortingOrder: 1
+  m_Sprite: {fileID: 21300000, guid: 46a8f7637dc733441b5a0ef8a6831928, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -86,6 +86,31 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!114 &8440759206647087860
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2793587851170953007}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6309b009e1c474e47ace4450fc5c1b65, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  carta: Nazuna_ Futuro
+  nomeEvolucao: Nazuna_Futuro
+  cartaEvolutivaPrefab: {fileID: 1219891774834141559, guid: 00f22107bb17c1243af926c2f1f624be, type: 3}
+  dano: 6000
+  defesa: 32000
+  ativa: 0
+  scalaInicial: {x: 0, y: 0, z: 0}
+  clicada: 0
+  evoluida: 0
+  sprite: {fileID: 0}
+  statusDefesa: {fileID: 0}
+  statusDano: {fileID: 0}
+  statusNome: {fileID: 0}
 --- !u!61 &544572979512838271
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -131,22 +156,3 @@ BoxCollider2D:
   serializedVersion: 2
   m_Size: {x: 19.20297, y: 31.039999}
   m_EdgeRadius: 0
---- !u!114 &8440759206647087860
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2793587851170953007}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6309b009e1c474e47ace4450fc5c1b65, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  carta: Fukuma.M. Futuro
-  dano: 6000
-  defesa: 3500
-  ativa: 0
-  scalaInicial: {x: 0, y: 0, z: 0}
-  clicada: 0
-  sprite: {fileID: 0}

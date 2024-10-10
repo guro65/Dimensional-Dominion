@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 1303014132505196623}
   m_Layer: 0
   m_Name: Carta_yuta
-  m_TagString: Carta Player
+  m_TagString: Carta Oponente
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -99,12 +99,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   carta: Yuta
-  dano: 4500
-  defesa: 6000
+  nomeEvolucao: 
+  cartaEvolutivaPrefab: {fileID: 0}
+  dano: 32000
+  defesa: 5000
   ativa: 1
   scalaInicial: {x: 0, y: 0, z: 0}
   clicada: 0
+  evoluida: 0
   sprite: {fileID: 0}
+  statusDefesa: {fileID: 0}
+  statusDano: {fileID: 0}
+  statusNome: {fileID: 0}
 --- !u!61 &1303014132505196623
 BoxCollider2D:
   m_ObjectHideFlags: 0

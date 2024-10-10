@@ -74,7 +74,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 1
   m_Sprite: {fileID: 21300000, guid: 1cd19e8d065c29347a011023845cfb3b, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -144,9 +144,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   carta: Reze
-  dano: 4000
-  defesa: 2500
+  nomeEvolucao: 
+  cartaEvolutivaPrefab: {fileID: 0}
+  dano: 32000
+  defesa: 7400
   ativa: 0
   scalaInicial: {x: 0, y: 0, z: 0}
   clicada: 0
+  evoluida: 0
   sprite: {fileID: 0}
+  statusDefesa: {fileID: 0}
+  statusDano: {fileID: 0}
+  statusNome: {fileID: 0}

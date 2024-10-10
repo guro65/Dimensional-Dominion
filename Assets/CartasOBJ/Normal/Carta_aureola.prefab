@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 8546432348910102764}
   m_Layer: 0
   m_Name: Carta_aureola
-  m_TagString: Carta Player
+  m_TagString: Carta Oponente
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -75,7 +75,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 1
-  m_Sprite: {fileID: 21300000, guid: c998fbbf7448629429c89da5517f591b, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 649c4f946f057f542b72b4c0b68771df, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -99,12 +99,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   carta: Aureola
-  dano: 1000
-  defesa: 1000
+  nomeEvolucao: 
+  cartaEvolutivaPrefab: {fileID: 0}
+  dano: 4500
+  defesa: 6000
   ativa: 0
   scalaInicial: {x: 0, y: 0, z: 0}
   clicada: 0
+  evoluida: 0
   sprite: {fileID: 0}
+  statusDefesa: {fileID: 0}
+  statusDano: {fileID: 0}
+  statusNome: {fileID: 0}
 --- !u!61 &8546432348910102764
 BoxCollider2D:
   m_ObjectHideFlags: 0

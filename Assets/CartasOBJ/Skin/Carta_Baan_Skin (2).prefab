@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 187912347077552996}
   m_Layer: 0
   m_Name: Carta_Baan_Skin (2)
-  m_TagString: Carta Player
+  m_TagString: Carta Oponente
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -74,7 +74,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 1
   m_Sprite: {fileID: 21300000, guid: feb4c5c64750d9b48b8b4fea5e920cf0, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -144,9 +144,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   carta: Baan Skin
-  dano: 4000
-  defesa: 8000
+  nomeEvolucao: 
+  cartaEvolutivaPrefab: {fileID: 0}
+  dano: 6000
+  defesa: 26500
   ativa: 0
   scalaInicial: {x: 0, y: 0, z: 0}
   clicada: 0
+  evoluida: 0
   sprite: {fileID: 0}
+  statusDefesa: {fileID: 0}
+  statusDano: {fileID: 0}
+  statusNome: {fileID: 0}

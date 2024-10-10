@@ -10,11 +10,11 @@ GameObject:
   m_Component:
   - component: {fileID: 1977157365207201439}
   - component: {fileID: 5061697441978042073}
-  - component: {fileID: 8953970942451349560}
   - component: {fileID: 8749804466543403319}
+  - component: {fileID: 8953970942451349560}
   m_Layer: 0
   m_Name: Carta_Eris_Futuro
-  m_TagString: Carta Player
+  m_TagString: Carta Oponente
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -74,8 +74,8 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
-  m_Sprite: {fileID: 21300000, guid: 05aa34087152ee64782086c1d216c287, type: 3}
+  m_SortingOrder: 1
+  m_Sprite: {fileID: 21300000, guid: 0444789b029f3cd49a791f898812025c, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -86,6 +86,31 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!114 &8749804466543403319
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8104396032740369045}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6309b009e1c474e47ace4450fc5c1b65, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  carta: Eris_Futuro
+  nomeEvolucao: Eris_Futuro
+  cartaEvolutivaPrefab: {fileID: 7235355597560649318, guid: 1dc55377d12d2c04395a27d50c778143, type: 3}
+  dano: 7000
+  defesa: 18650
+  ativa: 0
+  scalaInicial: {x: 0, y: 0, z: 0}
+  clicada: 0
+  evoluida: 0
+  sprite: {fileID: 0}
+  statusDefesa: {fileID: 0}
+  statusDano: {fileID: 0}
+  statusNome: {fileID: 0}
 --- !u!61 &8953970942451349560
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -131,22 +156,3 @@ BoxCollider2D:
   serializedVersion: 2
   m_Size: {x: 19.20297, y: 31.039999}
   m_EdgeRadius: 0
---- !u!114 &8749804466543403319
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8104396032740369045}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6309b009e1c474e47ace4450fc5c1b65, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  carta: Eris Futuro
-  dano: 7000
-  defesa: 6000
-  ativa: 0
-  scalaInicial: {x: 0, y: 0, z: 0}
-  clicada: 0
-  sprite: {fileID: 0}

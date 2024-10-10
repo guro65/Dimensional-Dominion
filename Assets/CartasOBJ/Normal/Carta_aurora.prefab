@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 2995750575071878489}
   m_Layer: 0
   m_Name: Carta_aurora
-  m_TagString: Carta Oponente
+  m_TagString: Carta Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -99,12 +99,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   carta: Aurora
-  dano: 5000
-  defesa: 6000
+  nomeEvolucao: Aurora
+  cartaEvolutivaPrefab: {fileID: 7194809756007326977, guid: c71b4b3d498ed5e46afd9c6deccba03a, type: 3}
+  dano: 7000
+  defesa: 16000
   ativa: 0
   scalaInicial: {x: 0, y: 0, z: 0}
   clicada: 0
+  evoluida: 0
   sprite: {fileID: 0}
+  statusDefesa: {fileID: 0}
+  statusDano: {fileID: 0}
+  statusNome: {fileID: 0}
 --- !u!61 &2995750575071878489
 BoxCollider2D:
   m_ObjectHideFlags: 0

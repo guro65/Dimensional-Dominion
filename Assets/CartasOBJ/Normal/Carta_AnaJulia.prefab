@@ -99,12 +99,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   carta: Ana Julia
+  nomeEvolucao: 
+  cartaEvolutivaPrefab: {fileID: 0}
   dano: 1500
   defesa: 800
   ativa: 1
   scalaInicial: {x: 0, y: 0, z: 0}
   clicada: 0
+  evoluida: 0
   sprite: {fileID: 0}
+  statusDefesa: {fileID: 0}
+  statusDano: {fileID: 0}
+  statusNome: {fileID: 0}
 --- !u!61 &2363078619704962600
 BoxCollider2D:
   m_ObjectHideFlags: 0

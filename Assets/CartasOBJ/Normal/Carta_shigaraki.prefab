@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 3647962733691285582}
   m_Layer: 0
   m_Name: Carta_shigaraki
-  m_TagString: Carta Oponente
+  m_TagString: Carta Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -75,7 +75,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 1
-  m_Sprite: {fileID: 21300000, guid: 580272670ec54464b8844641a1e2c3bd, type: 3}
+  m_Sprite: {fileID: 21300000, guid: e4cb12f3e872c914daca5c6dcb7ce9ac, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -99,12 +99,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   carta: Shigaraki
-  dano: 6666
-  defesa: 6666
+  nomeEvolucao: 
+  cartaEvolutivaPrefab: {fileID: 0}
+  dano: 66666
+  defesa: 9999
   ativa: 0
   scalaInicial: {x: 0, y: 0, z: 0}
   clicada: 0
+  evoluida: 0
   sprite: {fileID: 0}
+  statusDefesa: {fileID: 0}
+  statusDano: {fileID: 0}
+  statusNome: {fileID: 0}
 --- !u!61 &3647962733691285582
 BoxCollider2D:
   m_ObjectHideFlags: 0
