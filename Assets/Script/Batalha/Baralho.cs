@@ -3,23 +3,26 @@ using UnityEngine;
 
 public class Baralho : MonoBehaviour
 {
-    public List<GameObject> cartas = new List<GameObject>(); // Lista de cartas disponÃ­veis
-    public List<Token> tokens = new List<Token>(); // Lista de tokens disponÃ­veis
+    public List<GameObject> cartas = new List<GameObject>(); // Lista de cartas disponíveis
+    public List<Token> tokens = new List<Token>(); // Lista de tokens disponíveis
     public List<GameObject> deckPlayer = new List<GameObject>(); // Deck do jogador
     public List<GameObject> deckOponente = new List<GameObject>(); // Deck do oponente
-    public Player player; // ReferÃªncia ao jogador
-    public Player oponente; // ReferÃªncia ao oponente
+    public Player player; // Referência ao jogador
+    public Player oponente; // Referência ao oponente
     public float offsetX; // Offset para posicionar cartas
     public GameObject cartaSorteada; // Carta sorteada
     public int limitePlayer = 5; // Limite de cartas do player
     public int limiteOponente = 5; // Limite de cartas do oponente
+    public RarityManager rarityManager;
 
     void Start()
     {
         player = GameObject.FindWithTag("Player").GetComponent<Player>();
         oponente = GameObject.FindWithTag("Oponente").GetComponent<Player>();
+        rarityManager = GetComponent<RarityManager>();
         DeckInicialOponente();
         DeckInicialPlayer();
+
     }
 
     public List<GameObject> DeckInicial(int limite, string tipo)
@@ -42,9 +45,12 @@ public class Baralho : MonoBehaviour
         Vector3 offset = new Vector3(offsetX, 0, 0);
         for (int i = 0; i < limitePlayer; i++)
         {
-            cartaSorteada = cartas[Random.Range(0, cartas.Count)];
-            cartaSorteada.tag = "Carta Player"; // Define a tag da carta
-            Instantiate(cartaSorteada, posCarta += offset, Quaternion.identity); // Instancia a carta
+            cartaSorteada = rarityManager.GetCardByRarity(); // Obtém a carta pela raridade
+            if (cartaSorteada != null)
+            {
+                cartaSorteada.tag = "Carta Player";
+                Instantiate(cartaSorteada, posCarta += offset, Quaternion.identity);
+            }
         }
     }
 
@@ -54,9 +60,12 @@ public class Baralho : MonoBehaviour
         Vector3 offset = new Vector3(offsetX, 0, 0);
         for (int i = 0; i < limiteOponente; i++)
         {
-            cartaSorteada = cartas[Random.Range(0, cartas.Count)];
-            cartaSorteada.tag = "Carta Oponente"; // Define a tag da carta
-            Instantiate(cartaSorteada, posCarta += offset, Quaternion.identity); // Instancia a carta
+            cartaSorteada = rarityManager.GetCardByRarity(); // Obtém a carta pela raridade
+            if (cartaSorteada != null)
+            {
+                cartaSorteada.tag = "Carta Oponente";
+                Instantiate(cartaSorteada, posCarta += offset, Quaternion.identity);
+            }
         }
     }
 
