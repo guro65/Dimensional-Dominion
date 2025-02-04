@@ -19,7 +19,7 @@ public class Carta : MonoBehaviour
 
     private Token tokenEvolucao;
 
-    private void Awake()
+    private void Awake() 
     {
         ativa = true;
         sprite = GetComponent<SpriteRenderer>();
@@ -35,7 +35,7 @@ public class Carta : MonoBehaviour
 
     private void Update()
     {
-
+       
     }
 
     public void AtivaCarta()
@@ -48,7 +48,7 @@ public class Carta : MonoBehaviour
         ativa = false;
     }
 
-    private void OnMouseOver()
+    private void OnMouseOver() 
     {
         if (ativa)
         {
@@ -60,9 +60,9 @@ public class Carta : MonoBehaviour
         }
     }
 
-    private void OnMouseExit()
+    private void OnMouseExit() 
     {
-        if (ativa && !clicada)
+        if (ativa && !clicada) 
         {
             transform.localScale = scalaInicial;
             sprite.sortingOrder = 2;
@@ -120,7 +120,7 @@ public class Carta : MonoBehaviour
     {
         defesa -= danoInimigo;
 
-        if (defesa <= 0)
+        if(defesa <= 0)
         {
             Destroy(gameObject);
         }

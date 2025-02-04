@@ -13,7 +13,7 @@ OcclusionCullingSettings:
 --- !u!104 &2
 RenderSettings:
   m_ObjectHideFlags: 0
-  serializedVersion: 10
+  serializedVersion: 9
   m_Fog: 0
   m_FogColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
   m_FogMode: 3
@@ -38,12 +38,13 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
+  m_IndirectSpecularColor: {r: 0, g: 0, b: 0, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
   m_ObjectHideFlags: 0
-  serializedVersion: 13
-  m_BakeOnSceneLoad: 0
+  serializedVersion: 12
+  m_GIWorkflowMode: 1
   m_GISettings:
     serializedVersion: 2
     m_BounceScale: 1
@@ -66,6 +67,9 @@ LightmapSettings:
     m_LightmapParameters: {fileID: 0}
     m_LightmapsBakeMode: 1
     m_TextureCompression: 1
+    m_FinalGather: 0
+    m_FinalGatherFiltering: 1
+    m_FinalGatherRayCount: 256
     m_ReflectionCompression: 2
     m_MixedBakeMode: 2
     m_BakeBackend: 1
@@ -352,17 +356,15 @@ MonoBehaviour:
   m_lineSpacingMax: 0
   m_paragraphSpacing: 0
   m_charWidthMaxAdj: 0
-  m_TextWrappingMode: 1
+  m_enableWordWrapping: 1
   m_wordWrappingRatios: 0.4
   m_overflowMode: 0
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 1
-  m_ActiveFontFeatures: 6e72656b
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
-  m_EmojiFallbackSupport: 1
   m_parseCtrlCharacters: 1
   m_isOrthographic: 1
   m_isCullingEnabled: 0
@@ -543,17 +545,15 @@ MonoBehaviour:
   m_lineSpacingMax: 0
   m_paragraphSpacing: 0
   m_charWidthMaxAdj: 0
-  m_TextWrappingMode: 1
+  m_enableWordWrapping: 1
   m_wordWrappingRatios: 0.4
   m_overflowMode: 0
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 1
-  m_ActiveFontFeatures: 6e72656b
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
-  m_EmojiFallbackSupport: 1
   m_parseCtrlCharacters: 1
   m_isOrthographic: 1
   m_isCullingEnabled: 0
@@ -672,9 +672,6 @@ SpriteRenderer:
   m_ReflectionProbeUsage: 1
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
-  m_RayTracingAccelStructBuildFlagsOverride: 0
-  m_RayTracingAccelStructBuildFlags: 1
-  m_SmallMeshCulling: 1
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -1046,17 +1043,15 @@ MonoBehaviour:
   m_lineSpacingMax: 0
   m_paragraphSpacing: 0
   m_charWidthMaxAdj: 0
-  m_TextWrappingMode: 1
+  m_enableWordWrapping: 1
   m_wordWrappingRatios: 0.4
   m_overflowMode: 0
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 1
-  m_ActiveFontFeatures: 6e72656b
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
-  m_EmojiFallbackSupport: 1
   m_parseCtrlCharacters: 1
   m_isOrthographic: 1
   m_isCullingEnabled: 0
@@ -1239,17 +1234,15 @@ MonoBehaviour:
   m_lineSpacingMax: 0
   m_paragraphSpacing: 0
   m_charWidthMaxAdj: 0
-  m_TextWrappingMode: 1
+  m_enableWordWrapping: 1
   m_wordWrappingRatios: 0.4
   m_overflowMode: 0
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 1
-  m_ActiveFontFeatures: 6e72656b
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
-  m_EmojiFallbackSupport: 1
   m_parseCtrlCharacters: 1
   m_isOrthographic: 1
   m_isCullingEnabled: 0
@@ -1375,17 +1368,15 @@ MonoBehaviour:
   m_lineSpacingMax: 0
   m_paragraphSpacing: 0
   m_charWidthMaxAdj: 0
-  m_TextWrappingMode: 1
+  m_enableWordWrapping: 1
   m_wordWrappingRatios: 0.4
   m_overflowMode: 0
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 1
-  m_ActiveFontFeatures: 6e72656b
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
-  m_EmojiFallbackSupport: 1
   m_parseCtrlCharacters: 1
   m_isOrthographic: 1
   m_isCullingEnabled: 0
@@ -1819,17 +1810,15 @@ MonoBehaviour:
   m_lineSpacingMax: 0
   m_paragraphSpacing: 0
   m_charWidthMaxAdj: 0
-  m_TextWrappingMode: 1
+  m_enableWordWrapping: 1
   m_wordWrappingRatios: 0.4
   m_overflowMode: 0
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 1
-  m_ActiveFontFeatures: 6e72656b
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
-  m_EmojiFallbackSupport: 1
   m_parseCtrlCharacters: 1
   m_isOrthographic: 1
   m_isCullingEnabled: 0
@@ -2096,17 +2085,15 @@ MonoBehaviour:
   m_lineSpacingMax: 0
   m_paragraphSpacing: 0
   m_charWidthMaxAdj: 0
-  m_TextWrappingMode: 1
+  m_enableWordWrapping: 1
   m_wordWrappingRatios: 0.4
   m_overflowMode: 0
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 1
-  m_ActiveFontFeatures: 6e72656b
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
-  m_EmojiFallbackSupport: 1
   m_parseCtrlCharacters: 1
   m_isOrthographic: 1
   m_isCullingEnabled: 0
@@ -2224,17 +2211,15 @@ MonoBehaviour:
   m_lineSpacingMax: 0
   m_paragraphSpacing: 0
   m_charWidthMaxAdj: 0
-  m_TextWrappingMode: 1
+  m_enableWordWrapping: 1
   m_wordWrappingRatios: 0.4
   m_overflowMode: 0
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 1
-  m_ActiveFontFeatures: 6e72656b
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
-  m_EmojiFallbackSupport: 1
   m_parseCtrlCharacters: 1
   m_isOrthographic: 1
   m_isCullingEnabled: 0
@@ -2288,7 +2273,6 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 8300000, guid: b745a9afcd7239243a2bcb8ccc9bbdf1, type: 3}
-  m_Resource: {fileID: 8300000, guid: b745a9afcd7239243a2bcb8ccc9bbdf1, type: 3}
   m_PlayOnAwake: 1
   m_Volume: 1
   m_Pitch: 1
@@ -2524,17 +2508,15 @@ MonoBehaviour:
   m_lineSpacingMax: 0
   m_paragraphSpacing: 0
   m_charWidthMaxAdj: 0
-  m_TextWrappingMode: 1
+  m_enableWordWrapping: 1
   m_wordWrappingRatios: 0.4
   m_overflowMode: 0
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 1
-  m_ActiveFontFeatures: 6e72656b
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
-  m_EmojiFallbackSupport: 1
   m_parseCtrlCharacters: 1
   m_isOrthographic: 1
   m_isCullingEnabled: 0
@@ -2668,7 +2650,6 @@ BoxCollider2D:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1769994208}
   m_Enabled: 1
-  serializedVersion: 3
   m_Density: 1
   m_Material: {fileID: 0}
   m_IncludeLayers:
@@ -2692,8 +2673,7 @@ BoxCollider2D:
     m_Bits: 4294967295
   m_IsTrigger: 1
   m_UsedByEffector: 0
-  m_CompositeOperation: 0
-  m_CompositeOrder: 0
+  m_UsedByComposite: 0
   m_Offset: {x: -0.018954992, y: 0.018954873}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
@@ -2704,6 +2684,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
+  serializedVersion: 2
   m_Size: {x: 3.767397, y: 3.9948537}
   m_EdgeRadius: 0
 --- !u!1 &1815195055
@@ -2716,7 +2697,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1815195057}
   - component: {fileID: 1815195056}
-  - component: {fileID: 1815195058}
   m_Layer: 0
   m_Name: Baralho
   m_TagString: Untagged
@@ -2736,7 +2716,71 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 69ffbf372618e8442b83a1d91db7fcc4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cartas: []
+  cartas:
+  - {fileID: 7927379516049197691, guid: 670c4735e1fe2d748833b43cc5b2f49b, type: 3}
+  - {fileID: 446950583599400404, guid: 171704a9948e76b4ebf7d47924d486db, type: 3}
+  - {fileID: 8043101969509153655, guid: 3c91a01c76911c3478e24e5dd78da7d0, type: 3}
+  - {fileID: 1640503642240999713, guid: 5f5352774b79981418e30f4a686a74ff, type: 3}
+  - {fileID: 6849006518546129827, guid: 3a1f3ed2541b47349a15333671157bc5, type: 3}
+  - {fileID: 788099363346357904, guid: 0c64f6a6d17289548bafe77532996307, type: 3}
+  - {fileID: 5447980382351871673, guid: aa79e8e3a2a1af04cb767bbf5aa1b390, type: 3}
+  - {fileID: 9024626390886081733, guid: 5054b84317c96ae43be64be1b66c2525, type: 3}
+  - {fileID: 498287224721806649, guid: a9d9094c4e74cc743873c040f381828b, type: 3}
+  - {fileID: 7788590424174708857, guid: d120ba886674b3e4886d5c7165acd758, type: 3}
+  - {fileID: 1544775917205647913, guid: 6bf661d9acb4b354abdf261ab4b96db9, type: 3}
+  - {fileID: 6732544229690776962, guid: ce9c4278bb467ba4b84ea2d62e70016d, type: 3}
+  - {fileID: 494171415931369212, guid: ab574816d45bd76448016aacde587659, type: 3}
+  - {fileID: 2600745522996518845, guid: ee212522b9f58374cb3f1f341b5e4131, type: 3}
+  - {fileID: 1831546916258172995, guid: 16f3990b34ed51b46993203d7081c9d6, type: 3}
+  - {fileID: 659840505762878052, guid: bfeda8ba8d164bd4fa1758e92ed508bc, type: 3}
+  - {fileID: 1906227133913142336, guid: 37eb516874a544c4a842f554b37f7a93, type: 3}
+  - {fileID: 447194141532248300, guid: a55893796c5a6714198881615479a610, type: 3}
+  - {fileID: 1510041099105099626, guid: 7e1703482030f76499719e8085d6549c, type: 3}
+  - {fileID: 4402295520972095691, guid: ed7cdf803ee8acc4cada81d6cb94cbac, type: 3}
+  - {fileID: 173206699790315530, guid: 24f911953c7439342bc208f73eb07f6d, type: 3}
+  - {fileID: 4642197735840793577, guid: 88f20f81f3584d147ad3fc2a75f532e4, type: 3}
+  - {fileID: 1753251172006559006, guid: 30c8374d4f3e5154ebad528d03a2ec4d, type: 3}
+  - {fileID: 8346964770481690845, guid: fcdebf0e8e1656842ae7602906cf0f4a, type: 3}
+  - {fileID: 6355609365486868099, guid: dfc3409c1da36794ca3b3229e3ec62f4, type: 3}
+  - {fileID: 3282596770532777126, guid: 4f7f238844d9e79448181c525af3c353, type: 3}
+  - {fileID: 1260956424658759083, guid: ea46d9e0a8837fe44b2e487234acfea3, type: 3}
+  - {fileID: 6578407845203804528, guid: f0f01b86c282d134d8e90b16721f47f3, type: 3}
+  - {fileID: 8897057951384124107, guid: 8739f7e71844bc64eaea723a889505a9, type: 3}
+  - {fileID: 8621820358044379827, guid: 8183b62b4e23af8498b17d0057dbce3f, type: 3}
+  - {fileID: 8733386372157539091, guid: b94980f1bef8ff24e9f43f0e6def8a84, type: 3}
+  - {fileID: 2658857972706334232, guid: bdb7a4f33e76e624288d83e4858b5674, type: 3}
+  - {fileID: 2422697391326862320, guid: 2020ee25de8d6dd4e94ad98b244b8b4f, type: 3}
+  - {fileID: 1726025898884295900, guid: d92757e829273db46ae6e9821160e727, type: 3}
+  - {fileID: 5045979170356529238, guid: a0466e2dd568371418265138abc10bb1, type: 3}
+  - {fileID: 1455424943511101343, guid: 611ddfabbf355da4891a617379f892de, type: 3}
+  - {fileID: 1730133170003379306, guid: 67d1aef0104a1bd49b54ad6c747f264c, type: 3}
+  - {fileID: 3468613389612870481, guid: d624719ed2e1bc14da8cdee7dee6f13a, type: 3}
+  - {fileID: 8104396032740369045, guid: d19b554915181624798051f9fbaa6eee, type: 3}
+  - {fileID: 2793587851170953007, guid: 0ebb43aec46bf8b4cb51d3a2c29d9968, type: 3}
+  - {fileID: 1730133170003379306, guid: 67d1aef0104a1bd49b54ad6c747f264c, type: 3}
+  - {fileID: 8657145408104503767, guid: 474d5e785779e414fbaea95eec35de58, type: 3}
+  - {fileID: 8639122439175965173, guid: d8fa3092de3d4674096b40dc109c737c, type: 3}
+  - {fileID: 5993718130285758225, guid: d7c1c67e8c9a9e247b7bae2e4a4576c9, type: 3}
+  - {fileID: 222651879059583540, guid: c4a416d85b6ee6c41b2d4ceb3d72e245, type: 3}
+  - {fileID: 2044514714371304374, guid: 7da2668bc28f22a4c844dfa3e9e0d14c, type: 3}
+  - {fileID: 9172839387787682509, guid: d877fd74c222f394b914958e033a1fbc, type: 3}
+  - {fileID: 5414598284339943953, guid: a8740e5d6afc21f4f81904c3c70a0f4c, type: 3}
+  - {fileID: 1772640876093001965, guid: 51a4787535dfb3e43813b558f156206b, type: 3}
+  - {fileID: 8674453534039420001, guid: 05a046b1ccff17c4596dd9d099a1f92a, type: 3}
+  - {fileID: 4290329641255611205, guid: 73cc50f7ae0940140815976dc2ed18ff, type: 3}
+  - {fileID: 3925355228279184523, guid: 18be3917b90a61a4fa687753aaab8343, type: 3}
+  - {fileID: 8104396032740369045, guid: d19b554915181624798051f9fbaa6eee, type: 3}
+  - {fileID: 2793587851170953007, guid: 0ebb43aec46bf8b4cb51d3a2c29d9968, type: 3}
+  - {fileID: 6443795903646671581, guid: 233adc02a99eb9c49a0e277c78befa88, type: 3}
+  - {fileID: 8248710256170427499, guid: 5e83e7c18a7070a4f8779c47b8724b2d, type: 3}
+  - {fileID: 837529038688640761, guid: 6acab433dcb5bd84aa3304f4b76645f0, type: 3}
+  - {fileID: 7738897506981149228, guid: 0ee5fd302c9630f4a98b00466e8ed004, type: 3}
+  - {fileID: 3917899619505039834, guid: 5bb09b2dc69886d47a41a0ce5800d07d, type: 3}
+  - {fileID: 3928019644071170073, guid: 820991c4fff33b14a9fd2b9edf3fd85c, type: 3}
+  - {fileID: 8069998440447092503, guid: 3ef78554540799a4698353fd30823e4d, type: 3}
+  - {fileID: 591756497808064011, guid: d9fa89ab4307de94e83ae54b3dde0d49, type: 3}
+  - {fileID: 826625367588515386, guid: 32122719cdc5fdb4ca487af47aac14e1, type: 3}
+  - {fileID: 7664869729786198667, guid: 4cef516f700c186418b317b7a2e5ce10, type: 3}
   tokens:
   - {fileID: -1980827498479204752, guid: a848413886df9504ea12420fbca81406, type: 3}
   - {fileID: 6965335734981341417, guid: ff7821ebecb4b604e956780046b04192, type: 3}
@@ -2750,7 +2794,6 @@ MonoBehaviour:
   cartaSorteada: {fileID: 0}
   limitePlayer: 5
   limiteOponente: 5
-  rarityManager: {fileID: 0}
 --- !u!4 &1815195057
 Transform:
   m_ObjectHideFlags: 0
@@ -2766,27 +2809,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1815195058
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1815195055}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d0daa2e3cc18bf647a0c3aa50bedf5ba, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  rarities:
-  - name: Raro
-    percentage: 50
-    cards:
-    - {fileID: 5045979170356529238, guid: a0466e2dd568371418265138abc10bb1, type: 3}
-  - name: Raro
-    percentage: 1
-    cards:
-    - {fileID: 788099363346357904, guid: 0c64f6a6d17289548bafe77532996307, type: 3}
 --- !u!1 &2009902265
 GameObject:
   m_ObjectHideFlags: 0
@@ -3073,17 +3095,15 @@ MonoBehaviour:
   m_lineSpacingMax: 0
   m_paragraphSpacing: 0
   m_charWidthMaxAdj: 0
-  m_TextWrappingMode: 1
+  m_enableWordWrapping: 1
   m_wordWrappingRatios: 0.4
   m_overflowMode: 0
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 1
-  m_ActiveFontFeatures: 6e72656b
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
-  m_EmojiFallbackSupport: 1
   m_parseCtrlCharacters: 1
   m_isOrthographic: 1
   m_isCullingEnabled: 0
@@ -3209,17 +3229,15 @@ MonoBehaviour:
   m_lineSpacingMax: 0
   m_paragraphSpacing: 0
   m_charWidthMaxAdj: 0
-  m_TextWrappingMode: 1
+  m_enableWordWrapping: 1
   m_wordWrappingRatios: 0.4
   m_overflowMode: 0
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 1
-  m_ActiveFontFeatures: 00000000
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
-  m_EmojiFallbackSupport: 1
   m_parseCtrlCharacters: 1
   m_isOrthographic: 1
   m_isCullingEnabled: 0

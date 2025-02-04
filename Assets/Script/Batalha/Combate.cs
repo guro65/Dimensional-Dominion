@@ -140,7 +140,7 @@ public class Combate : MonoBehaviour
         AtualizaTextoBotao("Inicie o Turno");
     }
 
-    private void FinalizaCombate()
+        private void FinalizaCombate()
     {
         if (cartaAtivaPlayer != null && cartaAtivaOponente != null)
         {
@@ -150,7 +150,7 @@ public class Combate : MonoBehaviour
             cartaOponente.CalculaDano(cartaPlayer.DanoCarta());
             cartaPlayer.CalculaDano(cartaOponente.DanoCarta());
 
-
+            
             if (cartaPlayer.defesa <= 0)
             {
                 Destroy(cartaAtivaPlayer);
@@ -159,11 +159,11 @@ public class Combate : MonoBehaviour
                 VerificaVitoria();
             }
 
-
+            
             if (cartaOponente.defesa <= 0)
             {
-
-                tokenDropManager.OnCartaDerrotada();
+                
+                tokenDropManager.OnCartaDerrotada(); 
 
                 Destroy(cartaAtivaOponente);
                 cartaAtivaOponente = null;
@@ -222,8 +222,8 @@ public class Combate : MonoBehaviour
                 return deck[indiceAleatorio];
             }
         }
-        while (naoTemCarta);
-
+        while(naoTemCarta);
+        
         Debug.Log("Nenhuma carta disponível no deck.");
         return null;
     }
@@ -279,7 +279,7 @@ public class Combate : MonoBehaviour
         if (cartaAtivaPlayer != null)
         {
             Carta cartaSelecionada = cartaAtivaPlayer.GetComponent<Carta>();
-
+            
             if (token.ativo && cartaSelecionada != null)
             {
                 token.SetCartaSelecionada(cartaSelecionada);
@@ -306,7 +306,7 @@ public class Combate : MonoBehaviour
         }
     }
 
-
+    
     private void AtualizarCartaAtiva(Carta novaCarta)
     {
         cartaAtivaPlayer = novaCarta.gameObject;
