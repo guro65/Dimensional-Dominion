@@ -150,6 +150,6 @@ MonoBehaviour:
   nomeDoToken: Delta
   dano: 75
   vida: 400
-  mana: 35
+  manaCusto: 30
   raridade: 2
   chanceDeAparicao: 50

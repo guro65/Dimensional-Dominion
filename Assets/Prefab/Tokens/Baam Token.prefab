@@ -150,6 +150,6 @@ MonoBehaviour:
   nomeDoToken: Baam
   dano: 600
   vida: 2000
-  mana: 750
+  manaCusto: 750
   raridade: 5
   chanceDeAparicao: 10

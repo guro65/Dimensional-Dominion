@@ -150,6 +150,6 @@ MonoBehaviour:
   nomeDoToken: Nazuna
   dano: 350
   vida: 1000
-  mana: 250
+  manaCusto: 250
   raridade: 4
   chanceDeAparicao: 25

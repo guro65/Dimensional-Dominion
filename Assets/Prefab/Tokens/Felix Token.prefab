@@ -150,6 +150,6 @@ MonoBehaviour:
   nomeDoToken: Felix
   dano: 180
   vida: 560
-  mana: 150
+  manaCusto: 120
   raridade: 3
   chanceDeAparicao: 38

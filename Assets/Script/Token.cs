@@ -6,16 +6,17 @@ public class Token : MonoBehaviour
     public string nomeDoToken;
     public int dano;
     public int vida;
-    public int mana;
+    public int manaCusto; // Esta variável já existe e é onde você define o custo
     public Raridade raridade;
     public float chanceDeAparicao = 25f; // Porcentagem ajustável para a distribuição
 
     private Combate combateScript;
+    private Mana manaScript;
 
     private void Start()
     {
-        // Tenta encontrar automaticamente o script Combate na cena
         combateScript = FindObjectOfType<Combate>();
+        manaScript = FindObjectOfType<Mana>();
     }
 
     private void OnMouseDown()
@@ -35,5 +36,39 @@ public class Token : MonoBehaviour
         Lendario,
         Mitico
     }
-}
 
+    public void Atacar(Token alvo)
+    {
+        if (alvo != null && estaVivo)
+        {
+            alvo.ReceberDano(dano, this);
+        }
+    }
+
+    public void ReceberDano(int quantidade, Token atacante)
+    {
+        vida -= quantidade;
+        if (vida <= 0)
+        {
+            // Chama a função que vai adicionar mana baseada na raridade do token derrotado
+            if (manaScript != null && atacante != null)
+            {
+                // Verifica a tag do atacante para determinar quem derrotou o token
+                string tagDoVencedor = atacante.CompareTag("Token Player") ? "Token Player" : (atacante.CompareTag("Token Oponente") ? "Token Oponente" : "");
+                if (!string.IsNullOrEmpty(tagDoVencedor))
+                {
+                    manaScript.AdicionarManaPorRaridade(raridade, tagDoVencedor);
+                }
+            }
+
+            DerrotarToken();
+        }
+    }
+
+    public bool estaVivo => vida > 0;
+
+    private void DerrotarToken()
+    {
+        Destroy(gameObject);
+    }
+}
