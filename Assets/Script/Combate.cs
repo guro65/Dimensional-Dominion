@@ -6,13 +6,11 @@ using TMPro;
 public class Combate : MonoBehaviour
 {
     private Mana manaScript;
+    private Slots slotsScript;
+    private Caixa caixaScript; // Referência ao script Caixa
 
     [Header("Prefabs de Tokens Disponíveis")]
     public List<GameObject> todosOsTokens;
-
-    [Header("Locais de Spawn")]
-    public Transform locaisPlayerPai;
-    public Transform locaisOponentePai;
 
     [Header("Locais Especiais")]
     public Transform localDuelo;
@@ -30,17 +28,11 @@ public class Combate : MonoBehaviour
     public TextMeshProUGUI textoVida;
     public TextMeshProUGUI textoRaridade;
     public TextMeshProUGUI textoNome;
-    public TextMeshProUGUI textoManaCusto; // Mantendo o nome para a TextMeshPro
+    public TextMeshProUGUI textoManaCusto;
     public Button botaoFecharDetalhes;
     public Image imagemToken;
 
-    private List<Transform> spawnsPlayer = new List<Transform>();
-    private List<Transform> spawnsOponente = new List<Transform>();
-
     private GameObject tokenSelecionado;
-
-    [Header("Quantidade de Tokens")]
-    public int quantidadeParaCadaLado = 5;
 
     [Header("Painel de Combate")]
     public GameObject painelCombate;
@@ -50,18 +42,23 @@ public class Combate : MonoBehaviour
     private GameObject tokenPlayerEmDuelo;
     private GameObject tokenOponenteEmDuelo;
     private bool tokenPlayerAtacou = false;
+    private float tempoParaCompraOponente = 5f; // Tempo entre as tentativas de compra do oponente
+    private float contadorTempoCompraOponente = 0f;
 
     void Start()
     {
         manaScript = FindObjectOfType<Mana>();
+        slotsScript = FindObjectOfType<Slots>();
+        caixaScript = FindObjectOfType<Caixa>(); // Encontra o script Caixa
 
-        foreach (Transform child in locaisPlayerPai)
-            spawnsPlayer.Add(child);
-        foreach (Transform child in locaisOponentePai)
-            spawnsOponente.Add(child);
+        if (slotsScript == null || manaScript == null || caixaScript == null)
+        {
+            Debug.LogError("Um dos scripts (Slots, Mana ou Caixa) não foi encontrado na cena.");
+            enabled = false;
+            return;
+        }
 
-        GerarTokens(spawnsPlayer, "Token Player");
-        GerarTokens(spawnsOponente, "Token Oponente");
+        GerarTokensIniciais();
 
         painelDeAcoes.SetActive(false);
         painelDeDetalhes.SetActive(false);
@@ -106,16 +103,53 @@ public class Combate : MonoBehaviour
         {
             painelCombate.SetActive(false);
         }
+
+        // Lógica de compra automática do oponente
+        contadorTempoCompraOponente += Time.deltaTime;
+        if (contadorTempoCompraOponente >= tempoParaCompraOponente)
+        {
+            contadorTempoCompraOponente = 0f;
+            if (caixaScript != null)
+            {
+                caixaScript.OponenteTentarComprarToken();
+            }
+        }
     }
 
-    void GerarTokens(List<Transform> pontosDeSpawn, string tagDoDono)
+    void GerarTokensIniciais()
     {
-        for (int i = 0; i < Mathf.Min(quantidadeParaCadaLado, pontosDeSpawn.Count); i++)
+        int quantidadeParaCadaLado = Mathf.Min(5, slotsScript.playerSlots.Count); // Garante que não gere mais tokens que slots
+        for (int i = 0; i < quantidadeParaCadaLado; i++)
+        {
+            GerarEColocarTokenInicial(true);
+            GerarEColocarTokenInicial(false);
+        }
+    }
+
+    void GerarEColocarTokenInicial(bool paraPlayer)
+    {
+        List<Transform> slots = paraPlayer ? slotsScript.playerSlots : slotsScript.oponenteSlots;
+        string tagDoDono = paraPlayer ? "Token Player" : "Token Oponente";
+        Transform slotVazio = null;
+
+        // Tenta encontrar um slot vazio
+        foreach (Transform slot in slots)
+        {
+            if (slot.childCount == 0)
+            {
+                slotVazio = slot;
+                break;
+            }
+        }
+
+        if (slotVazio != null)
         {
             GameObject tokenPrefab = EscolherTokenPorChance();
             if (tokenPrefab != null)
             {
-                GameObject tokenInstanciado = Instantiate(tokenPrefab, pontosDeSpawn[i].position, Quaternion.identity);
+                GameObject tokenInstanciado = Instantiate(tokenPrefab, slotVazio.position, Quaternion.identity);
+                tokenInstanciado.transform.SetParent(slotVazio);
+                tokenInstanciado.transform.localPosition = Vector3.zero;
                 tokenInstanciado.tag = tagDoDono;
                 tokenInstanciado.AddComponent<BoxCollider2D>();
 
@@ -128,7 +162,7 @@ public class Combate : MonoBehaviour
         }
     }
 
-    GameObject EscolherTokenPorChance()
+    public GameObject EscolherTokenPorChance()
     {
         float totalChance = 0f;
         foreach (GameObject token in todosOsTokens)
@@ -155,7 +189,7 @@ public class Combate : MonoBehaviour
     {
         if (tokenSelecionado != null) return;
         if (token.CompareTag("Token Oponente")) return;
-        if (tokenPlayerEmDuelo != null) return; // Impede jogar outro token se já tiver um em duelo
+        if (tokenPlayerEmDuelo != null) return;
 
         tokenSelecionado = token;
         painelDeAcoes.SetActive(true);
@@ -166,7 +200,7 @@ public class Combate : MonoBehaviour
         if (tokenSelecionado != null)
         {
             Token dados = tokenSelecionado.GetComponent<Token>();
-            int custo = dados.manaCusto; // Usando o nome correto da variável
+            int custo = dados.manaCusto;
             bool podeJogar = false;
 
             if (tokenSelecionado.CompareTag("Token Player"))
@@ -175,6 +209,7 @@ public class Combate : MonoBehaviour
                 if (podeJogar)
                 {
                     tokenSelecionado.transform.position = dueloPlayer.position;
+                    tokenSelecionado.transform.SetParent(localDuelo);
                     tokenPlayerEmDuelo = tokenSelecionado;
                 }
             }
@@ -196,67 +231,72 @@ public class Combate : MonoBehaviour
     {
         if (tokenOponenteEmDuelo != null) return;
 
-        GameObject[] tokensOponente = GameObject.FindGameObjectsWithTag("Token Oponente");
+        List<Transform> slotsOponente = slotsScript.oponenteSlots;
+        List<GameObject> tokensDisponiveis = new List<GameObject>();
 
-        // Ordenar os tokens do oponente por custo de mana (opcional, mas pode ser útil para IA)
-        List<GameObject> listaTokensOponente = new List<GameObject>(tokensOponente);
-        listaTokensOponente.Sort((a, b) => a.GetComponent<Token>().manaCusto.CompareTo(b.GetComponent<Token>().manaCusto));
-
-        foreach (GameObject token in listaTokensOponente)
+        foreach (Transform slot in slotsOponente)
         {
-            if (token.transform.position == dueloOponente.position)
-                continue;
+            if (slot.childCount > 0)
+            {
+                GameObject tokenNoSlot = slot.GetChild(0).gameObject;
+                if (tokenNoSlot.CompareTag("Token Oponente") && tokenNoSlot.transform.position != dueloOponente.position)
+                {
+                    tokensDisponiveis.Add(tokenNoSlot);
+                }
+            }
+        }
 
+        tokensDisponiveis.Sort((a, b) => a.GetComponent<Token>().manaCusto.CompareTo(b.GetComponent<Token>().manaCusto));
+
+        foreach (GameObject token in tokensDisponiveis)
+        {
             Token dados = token.GetComponent<Token>();
-            bool podeJogar = manaScript.GastarManaOponente(dados.manaCusto); // Usando o nome correto da variável
+            bool podeJogar = manaScript.GastarManaOponente(dados.manaCusto);
             if (podeJogar)
             {
                 token.transform.position = dueloOponente.position;
+                token.transform.SetParent(localDuelo);
                 tokenOponenteEmDuelo = token;
                 Debug.Log($"Oponente jogou o token: {dados.nomeDoToken} (Custo: {dados.manaCusto})");
                 break;
             }
         }
+
+        // Se não houver token para jogar, tenta comprar um
+        if (tokenOponenteEmDuelo == null && caixaScript != null && slotsScript.OponenteSlotDisponivel())
+        {
+            caixaScript.OponenteTentarComprarToken();
+        }
     }
 
     void MostrarDetalhes()
     {
-        GameObject tokenEmDuelo = null;
+        GameObject tokenParaMostrar = null;
 
-        // Verifica se há um token do player no local de duelo
-        Collider2D[] coliders = Physics2D.OverlapCircleAll(dueloPlayer.position, 0.1f);
-        foreach (Collider2D col in coliders)
+        Collider2D[] colidersDuelo = Physics2D.OverlapCircleAll(dueloPlayer.position, 0.1f);
+        foreach (Collider2D col in colidersDuelo)
         {
             if (col != null && col.CompareTag("Token Player"))
             {
-                tokenEmDuelo = col.gameObject;
+                tokenParaMostrar = col.gameObject;
                 break;
             }
         }
 
-        GameObject tokenParaMostrar = null;
-
-        if (tokenEmDuelo != null)
+        if (tokenParaMostrar == null && tokenSelecionado != null && tokenSelecionado.CompareTag("Token Player"))
         {
-            // Se houver um token do player no duelo, mostra ele
-            tokenParaMostrar = tokenEmDuelo;
-        }
-        else if (tokenSelecionado != null && tokenSelecionado.CompareTag("Token Player"))
-        {
-            // Se não houver token em duelo, mas o jogador selecionou um token válido do player
             tokenParaMostrar = tokenSelecionado;
         }
 
-        // Exibir os dados do token do player
         if (tokenParaMostrar != null)
         {
             Token dados = tokenParaMostrar.GetComponent<Token>();
-            if (dados != null) // Adicionada verificação se o componente Token existe
+            if (dados != null)
             {
                 textoNome.text = dados.nomeDoToken;
                 textoDano.text = $"Dano: {dados.dano}";
                 textoVida.text = $"Vida: {dados.vida}";
-                textoManaCusto.text = $"Mana: {dados.manaCusto}"; // Correção aqui!
+                textoManaCusto.text = $"Mana: {dados.manaCusto}";
                 textoRaridade.text = $"Raridade: {dados.raridade}";
 
                 SpriteRenderer spriteRenderer = tokenParaMostrar.GetComponent<SpriteRenderer>();
@@ -271,13 +311,13 @@ public class Combate : MonoBehaviour
             else
             {
                 Debug.LogError("O token encontrado não possui o componente 'Token'.");
-                painelDeDetalhes.SetActive(false); // Garante que o painel não fique aberto com dados inválidos
+                painelDeDetalhes.SetActive(false);
             }
         }
         else
         {
             Debug.Log("Nenhum token válido do player para mostrar os detalhes.");
-            painelDeDetalhes.SetActive(false); // Garante que o painel seja fechado indevidamente
+            painelDeDetalhes.SetActive(false);
         }
     }
 
@@ -288,7 +328,7 @@ public class Combate : MonoBehaviour
         textoNome.text = dados.nomeDoToken;
         textoDano.text = $"Dano: {dados.dano}";
         textoVida.text = $"Vida: {dados.vida}";
-        textoManaCusto.text = $"Mana: {dados.manaCusto}"; // Correção aqui!
+        textoManaCusto.text = $"Mana: {dados.manaCusto}";
         textoRaridade.text = $"Raridade: {dados.raridade}";
 
         SpriteRenderer spriteRenderer = token.GetComponent<SpriteRenderer>();
@@ -319,17 +359,20 @@ public class Combate : MonoBehaviour
         Token tPlayer = tokenPlayerEmDuelo.GetComponent<Token>();
         Token tOponente = tokenOponenteEmDuelo.GetComponent<Token>();
 
-        tOponente.ReceberDano(tPlayer.dano, tPlayer); // 'tPlayer' é o atacante
+        tOponente.ReceberDano(tPlayer.dano, tPlayer);
         Debug.Log($"Oponente perdeu {tPlayer.dano} de vida. Vida restante: {tOponente.vida}");
 
         tokenPlayerAtacou = true;
 
         if (!tOponente.estaVivo)
         {
+            string tagVencedor = "Token Player";
+            Token.Raridade raridadeTokenDerrotado = tOponente.raridade;
+            Destroy(tokenOponenteEmDuelo);
             tokenOponenteEmDuelo = null;
             tokenPlayerAtacou = false;
+            manaScript.AdicionarManaPorRaridade(raridadeTokenDerrotado, tagVencedor);
 
-            // Tentar jogar outro token do oponente
             Invoke("TentarNovoTokenOponente", 1.0f);
             return;
         }
@@ -344,41 +387,61 @@ public class Combate : MonoBehaviour
             Token tPlayer = tokenPlayerEmDuelo.GetComponent<Token>();
             Token tOponente = tokenOponenteEmDuelo.GetComponent<Token>();
 
-            tPlayer.ReceberDano(tOponente.dano, tOponente); // 'tOponente' é o atacante
+            tPlayer.ReceberDano(tOponente.dano, tOponente);
             Debug.Log($"Player perdeu {tOponente.dano} de vida. Vida restante: {tPlayer.vida}");
 
             if (!tPlayer.estaVivo)
             {
+                string tagVencedor = "Token Oponente";
+                Token.Raridade raridadeTokenDerrotado = tPlayer.raridade;
+                Destroy(tokenPlayerEmDuelo);
                 tokenPlayerEmDuelo = null;
+                manaScript.AdicionarManaPorRaridade(raridadeTokenDerrotado, tagVencedor);
             }
 
             tokenPlayerAtacou = false;
         }
     }
+
     void TentarNovoTokenOponente()
     {
-        if (tokenOponenteEmDuelo != null) return; // Já existe um token
+        if (tokenOponenteEmDuelo != null) return;
 
-        GameObject[] tokensOponente = GameObject.FindGameObjectsWithTag("Token Oponente");
+        List<Transform> slotsOponente = slotsScript.oponenteSlots;
+        List<GameObject> tokensDisponiveis = new List<GameObject>();
 
-        // Ordenar os tokens do oponente por custo de mana (opcional, mas pode ser útil para IA)
-        List<GameObject> listaTokensOponente = new List<GameObject>(tokensOponente);
-        listaTokensOponente.Sort((a, b) => a.GetComponent<Token>().manaCusto.CompareTo(b.GetComponent<Token>().manaCusto));
-
-        foreach (GameObject token in listaTokensOponente)
+        foreach (Transform slot in slotsOponente)
         {
-            if (token.transform.position == dueloOponente.position)
-                continue;
+            if (slot.childCount > 0)
+            {
+                GameObject tokenNoSlot = slot.GetChild(0).gameObject;
+                if (tokenNoSlot.CompareTag("Token Oponente") && tokenNoSlot.transform.position != dueloOponente.position)
+                {
+                    tokensDisponiveis.Add(tokenNoSlot);
+                }
+            }
+        }
 
+        tokensDisponiveis.Sort((a, b) => a.GetComponent<Token>().manaCusto.CompareTo(b.GetComponent<Token>().manaCusto));
+
+        foreach (GameObject token in tokensDisponiveis)
+        {
             Token dados = token.GetComponent<Token>();
-            bool podeJogar = manaScript.GastarManaOponente(dados.manaCusto); // Usando o nome correto da variável
+            bool podeJogar = manaScript.GastarManaOponente(dados.manaCusto);
             if (podeJogar)
             {
                 token.transform.position = dueloOponente.position;
+                token.transform.SetParent(localDuelo);
                 tokenOponenteEmDuelo = token;
                 Debug.Log($"Oponente jogou outro token: {dados.nomeDoToken} (Custo: {dados.manaCusto})");
                 break;
             }
+        }
+
+        // Se não houver token para jogar, tenta comprar um
+        if (tokenOponenteEmDuelo == null && caixaScript != null && slotsScript.OponenteSlotDisponivel())
+        {
+            caixaScript.OponenteTentarComprarToken();
         }
     }
 }
