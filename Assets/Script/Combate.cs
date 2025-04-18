@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+ï»¿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -7,9 +7,9 @@ public class Combate : MonoBehaviour
 {
     private Mana manaScript;
     private Slots slotsScript;
-    private Caixa caixaScript; // Referência ao script Caixa
+    private Caixa caixaScript; // Referï¿½ncia ao script Caixa
 
-    [Header("Prefabs de Tokens Disponíveis")]
+    [Header("Prefabs de Tokens Disponï¿½veis")]
     public List<GameObject> todosOsTokens;
 
     [Header("Locais Especiais")]
@@ -53,7 +53,7 @@ public class Combate : MonoBehaviour
 
         if (slotsScript == null || manaScript == null || caixaScript == null)
         {
-            Debug.LogError("Um dos scripts (Slots, Mana ou Caixa) não foi encontrado na cena.");
+            Debug.LogError("Um dos scripts (Slots, Mana ou Caixa) nï¿½o foi encontrado na cena.");
             enabled = false;
             return;
         }
@@ -104,7 +104,7 @@ public class Combate : MonoBehaviour
             painelCombate.SetActive(false);
         }
 
-        // Lógica de compra automática do oponente
+        // Lï¿½gica de compra automï¿½tica do oponente
         contadorTempoCompraOponente += Time.deltaTime;
         if (contadorTempoCompraOponente >= tempoParaCompraOponente)
         {
@@ -118,7 +118,7 @@ public class Combate : MonoBehaviour
 
     void GerarTokensIniciais()
     {
-        int quantidadeParaCadaLado = Mathf.Min(5, slotsScript.playerSlots.Count); // Garante que não gere mais tokens que slots
+        int quantidadeParaCadaLado = Mathf.Min(5, slotsScript.playerSlots.Count); // Garante que nï¿½o gere mais tokens que slots
         for (int i = 0; i < quantidadeParaCadaLado; i++)
         {
             GerarEColocarTokenInicial(true);
@@ -262,7 +262,7 @@ public class Combate : MonoBehaviour
             }
         }
 
-        // Se não houver token para jogar, tenta comprar um
+        // Se nï¿½o houver token para jogar, tenta comprar um
         if (tokenOponenteEmDuelo == null && caixaScript != null && slotsScript.OponenteSlotDisponivel())
         {
             caixaScript.OponenteTentarComprarToken();
@@ -310,13 +310,13 @@ public class Combate : MonoBehaviour
             }
             else
             {
-                Debug.LogError("O token encontrado não possui o componente 'Token'.");
+                Debug.LogError("O token encontrado nï¿½o possui o componente 'Token'.");
                 painelDeDetalhes.SetActive(false);
             }
         }
         else
         {
-            Debug.Log("Nenhum token válido do player para mostrar os detalhes.");
+            Debug.Log("Nenhum token vï¿½lido do player para mostrar os detalhes.");
             painelDeDetalhes.SetActive(false);
         }
     }
@@ -438,7 +438,7 @@ public class Combate : MonoBehaviour
             }
         }
 
-        // Se não houver token para jogar, tenta comprar um
+        // Se nï¿½o houver token para jogar, tenta comprar um
         if (tokenOponenteEmDuelo == null && caixaScript != null && slotsScript.OponenteSlotDisponivel())
         {
             caixaScript.OponenteTentarComprarToken();

@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 
 public class Token : MonoBehaviour
 {
@@ -6,9 +6,9 @@ public class Token : MonoBehaviour
     public string nomeDoToken;
     public int dano;
     public int vida;
-    public int manaCusto; // Esta variável já existe e é onde você define o custo
+    public int manaCusto; // Esta variï¿½vel jï¿½ existe e ï¿½ onde vocï¿½ define o custo
     public Raridade raridade;
-    public float chanceDeAparicao = 25f; // Porcentagem ajustável para a distribuição
+    public float chanceDeAparicao = 25f; // Porcentagem ajustï¿½vel para a distribuiï¿½ï¿½o
 
     private Combate combateScript;
     private Mana manaScript;
@@ -50,7 +50,7 @@ public class Token : MonoBehaviour
         vida -= quantidade;
         if (vida <= 0)
         {
-            // Chama a função que vai adicionar mana baseada na raridade do token derrotado
+            // Chama a funï¿½ï¿½o que vai adicionar mana baseada na raridade do token derrotado
             if (manaScript != null && atacante != null)
             {
                 // Verifica a tag do atacante para determinar quem derrotou o token

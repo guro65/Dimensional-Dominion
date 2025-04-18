@@ -153,3 +153,7 @@ MonoBehaviour:
   manaCusto: 30
   raridade: 2
   chanceDeAparicao: 50
+  habilidades:
+  - nome: sla
+    manaCusto: 1
+    dano: 9999999
