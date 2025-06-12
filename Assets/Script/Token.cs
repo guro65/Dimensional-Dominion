@@ -6,9 +6,13 @@ public class Token : MonoBehaviour
     public string nomeDoToken;
     public int dano;
     public int vida;
-    public int manaCusto; // Esta vari�vel j� existe e � onde voc� define o custo
+    public int manaCusto; // Custo para jogar o token
     public Raridade raridade;
-    public float chanceDeAparicao = 25f; // Porcentagem ajust�vel para a distribui��o
+    public float chanceDeAparicao = 25f;
+
+    [Header("Habilidade Especial do Token")]
+    public int danoEspecial = 8;        // Dano da habilidade especial deste token
+    public int custoManaEspecial = 5;   // Custo de mana para usar a habilidade especial deste token
 
     private Combate combateScript;
     private Mana manaScript;
@@ -50,17 +54,14 @@ public class Token : MonoBehaviour
         vida -= quantidade;
         if (vida <= 0)
         {
-            // Chama a fun��o que vai adicionar mana baseada na raridade do token derrotado
             if (manaScript != null && atacante != null)
             {
-                // Verifica a tag do atacante para determinar quem derrotou o token
                 string tagDoVencedor = atacante.CompareTag("Token Player") ? "Token Player" : (atacante.CompareTag("Token Oponente") ? "Token Oponente" : "");
                 if (!string.IsNullOrEmpty(tagDoVencedor))
                 {
                     manaScript.AdicionarManaPorRaridade(raridade, tagDoVencedor);
                 }
             }
-
             DerrotarToken();
         }
     }

@@ -6,21 +6,13 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/Menu/Menu.unity
-    guid: 1678cb2211f5d7443888c3f32322eb08
+    path: Assets/Scenes/Jogo/Jogo.unity
+    guid: c49df4702f5092140b620022e26894f1
   - enabled: 1
-    path: Assets/Scenes/ModoNormal/Jogo.unity
-    guid: 08cdc51487eb92b4db628c16bc75ce7e
+    path: Assets/Scenes/Inventario.unity
+    guid: 1685d00a4c754f046bc5c4971b33f96f
   - enabled: 1
-    path: Assets/Scenes/Menu/Cartas.unity
-    guid: 55d8ff114cdb6954bb9a036f8fb438d7
-  - enabled: 1
-    path: Assets/Scenes/Menu/Cartas2.unity
-    guid: b7917acce464f9142a5916ba750ef4d9
-  - enabled: 1
-    path: Assets/Scenes/Menu/Cartas3.unity
-    guid: 50e4fb3212d77204e8eb9af5705a70ef
-  - enabled: 1
-    path: Assets/Scenes/Menu/Cartas4.unity
-    guid: ad49b66155fbe404aa1f2f2e5066d2b5
+    path: Assets/Scenes/Loja.unity
+    guid: 2383cb8f420b23c47ae17b59bfd14b6e
   m_configObjects: {}
+  m_UseUCBPForAssetBundles: 0
