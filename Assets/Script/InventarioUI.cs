@@ -42,7 +42,7 @@ public class InventarioUI : MonoBehaviour
         }
     }
 
-    void AtualizarInventario()
+    public void AtualizarInventario()
     {
         // Limpa antes de adicionar para evitar duplicatas
         foreach (Transform filho in conteudo)
@@ -61,7 +61,7 @@ public class InventarioUI : MonoBehaviour
         {
             GameObject slot = Instantiate(prefabSlotToken, conteudo);
 
-            // Pega o sprite do SpriteRenderer do prefab de token
+            // Pega o sprite do SpriteRenderer do token instanciado
             SpriteRenderer sr = token.GetComponent<SpriteRenderer>();
             if (sr != null && slot.GetComponent<Image>() != null)
             {

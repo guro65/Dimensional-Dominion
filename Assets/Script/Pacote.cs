@@ -14,13 +14,13 @@ public class Pacote : MonoBehaviour
     public string nomeDoPacote = "Pacote Básico";
     public List<PossivelToken> tokensPossiveis = new List<PossivelToken>();
 
-    [Header("Probabilidade por raridade (soma 100%)")]
+    [Header("Probabilidade por raridade (pode somar qualquer valor)")]
     [Range(0, 100)] public int chanceComum = 60;
     [Range(0, 100)] public int chanceIncomum = 25;
     [Range(0, 100)] public int chanceRaro = 10;
     [Range(0, 100)] public int chanceEpico = 4;
     [Range(0, 100)] public int chanceLendario = 1;
-    [Range(0, 100)] public int chanceMitico = 0; // nova linha para mitico
+    [Range(0, 100)] public int chanceMitico = 0;
 
     public int preco1Token = 500;
     public int preco10Tokens = 4000;
@@ -35,7 +35,7 @@ public class Pacote : MonoBehaviour
     public Text textoNomeToken;
 
     [Header("Painel Aviso Inventário Cheio")]
-    public GameObject painelInventarioCheio; // Opcional: painel para mostrar msg de inventário cheio
+    public GameObject painelInventarioCheio;
 
     private List<Token> tokensParaRevelar = new List<Token>();
     private int indiceTokenAtual = 0;
@@ -65,7 +65,6 @@ public class Pacote : MonoBehaviour
     {
         if (revelando) return;
 
-        // Verifica se o inventário está cheio antes de gastar moedas
         if (Inventario.instance == null || Inventario.instance.EstaCheio())
         {
             MostrarPainelInventarioCheio("Inventário cheio! Não é possível roletar.");
@@ -77,15 +76,24 @@ public class Pacote : MonoBehaviour
             Token sorteado = SorteiaToken();
             if (sorteado != null)
             {
-                if (Inventario.instance.AdicionarToken(sorteado))
+                if (AutoSell.instance != null && AutoSell.instance.EstaMarcadoParaAutoSell(sorteado.raridade))
                 {
-                    tokensParaRevelar = new List<Token> { sorteado };
-                    indiceTokenAtual = 0;
-                    MostrarPainelRevelacao();
+                    int valor = AutoSell.instance.ValorVenda(sorteado.raridade);
+                    Moeda.instance.AdicionarMoedas(valor);
                 }
                 else
                 {
-                    MostrarPainelInventarioCheio("Inventário cheio! Não é possível adicionar o token.");
+                    Token novoToken = Inventario.instance.AdicionarToken(sorteado);
+                    if (novoToken != null)
+                    {
+                        tokensParaRevelar = new List<Token> { novoToken };
+                        indiceTokenAtual = 0;
+                        MostrarPainelRevelacao();
+                    }
+                    else
+                    {
+                        MostrarPainelInventarioCheio("Inventário cheio! Não é possível adicionar o token.");
+                    }
                 }
             }
         }
@@ -99,7 +107,6 @@ public class Pacote : MonoBehaviour
     {
         if (revelando) return;
 
-        // Verifica se há espaço suficiente para 10 tokens
         if (Inventario.instance == null || !Inventario.instance.TemEspacoParaAdicionar(10))
         {
             MostrarPainelInventarioCheio("Espaço insuficiente no inventário para 10 tokens.");
@@ -114,15 +121,23 @@ public class Pacote : MonoBehaviour
                 Token sorteado = SorteiaToken();
                 if (sorteado != null)
                 {
-                    if (Inventario.instance.AdicionarToken(sorteado))
+                    if (AutoSell.instance != null && AutoSell.instance.EstaMarcadoParaAutoSell(sorteado.raridade))
                     {
-                        tokensParaRevelar.Add(sorteado);
+                        int valor = AutoSell.instance.ValorVenda(sorteado.raridade);
+                        Moeda.instance.AdicionarMoedas(valor);
                     }
                     else
                     {
-                        // Caso algum token não possa ser adicionado (difícil acontecer aqui)
-                        MostrarPainelInventarioCheio("Inventário ficou cheio durante a roleta.");
-                        break;
+                        Token novoToken = Inventario.instance.AdicionarToken(sorteado);
+                        if (novoToken != null)
+                        {
+                            tokensParaRevelar.Add(novoToken);
+                        }
+                        else
+                        {
+                            MostrarPainelInventarioCheio("Inventário ficou cheio durante a roleta.");
+                            break;
+                        }
                     }
                 }
             }
@@ -211,14 +226,28 @@ public class Pacote : MonoBehaviour
         return candidatos[idx].prefabToken;
     }
 
+    // Método robusto de sorteio de raridade
     Token.Raridade SorteiaRaridade()
     {
-        int rand = Random.Range(1, 101);
-        if (rand <= chanceComum) return Token.Raridade.Comum;
-        if (rand <= chanceComum + chanceIncomum) return Token.Raridade.Incomum;
-        if (rand <= chanceComum + chanceIncomum + chanceRaro) return Token.Raridade.Raro;
-        if (rand <= chanceComum + chanceIncomum + chanceRaro + chanceEpico) return Token.Raridade.Epico;
-        if (rand <= chanceComum + chanceIncomum + chanceRaro + chanceEpico + chanceLendario) return Token.Raridade.Lendario;
-        return Token.Raridade.Mitico;
+        int[] chances = new int[] { chanceComum, chanceIncomum, chanceRaro, chanceEpico, chanceLendario, chanceMitico };
+        int soma = 0;
+        foreach (var c in chances) soma += c;
+
+        if (soma <= 0)
+        {
+            Debug.LogError("A soma das chances das raridades está zero ou negativa!");
+            return Token.Raridade.Comum;
+        }
+
+        int rand = Random.Range(0, soma); // [0, soma)
+        for (int i = 0; i < chances.Length; i++)
+        {
+            if (rand < chances[i])
+                return (Token.Raridade)i;
+            rand -= chances[i];
+        }
+
+        Debug.LogWarning("Falha ao sortear raridade, retornando Comum.");
+        return Token.Raridade.Comum;
     }
 }

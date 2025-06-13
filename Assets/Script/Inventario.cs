@@ -24,20 +24,24 @@ public class Inventario : MonoBehaviour
     }
 
     /// <summary>
-    /// Adiciona um token ao inventário do jogador, se houver espaço.
+    /// Instancia e adiciona um token ao inventário do jogador, se houver espaço.
     /// </summary>
-    /// <returns>Retorna true se adicionou com sucesso, false se o inventário está cheio.</returns>
-    public bool AdicionarToken(Token token)
+    /// <returns>Retorna o novo Token instanciado se adicionou com sucesso, null se o inventário está cheio.</returns>
+    public Token AdicionarToken(Token tokenPrefab)
     {
         if (tokensJogador.Count >= limiteEspaco)
         {
             Debug.Log("Inventário cheio! Não é possível adicionar mais tokens.");
-            return false;
+            return null;
         }
-        tokensJogador.Add(token);
-        return true;
+        Token novoToken = Instantiate(tokenPrefab);
+        tokensJogador.Add(novoToken);
+        return novoToken;
     }
 
+    /// <summary>
+    /// Retorna a lista dos tokens do jogador.
+    /// </summary>
     public List<Token> ObterTokens()
     {
         return tokensJogador;
