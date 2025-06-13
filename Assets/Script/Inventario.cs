@@ -5,15 +5,17 @@ public class Inventario : MonoBehaviour
 {
     public static Inventario instance;
 
-    [Header("Tokens do jogador")]
-    public List<Token> tokensJogador = new List<Token>();
+    [Header("Configurações de Inventário")]
+    public int limiteEspaco = 10; // Defina o limite de espaço no Inspector
+
+    private List<Token> tokensJogador = new List<Token>();
 
     void Awake()
     {
         if (instance == null)
         {
             instance = this;
-            DontDestroyOnLoad(gameObject); // Persiste entre cenas
+            DontDestroyOnLoad(gameObject);
         }
         else
         {
@@ -21,10 +23,19 @@ public class Inventario : MonoBehaviour
         }
     }
 
-    public void AdicionarToken(Token token)
+    /// <summary>
+    /// Adiciona um token ao inventário do jogador, se houver espaço.
+    /// </summary>
+    /// <returns>Retorna true se adicionou com sucesso, false se o inventário está cheio.</returns>
+    public bool AdicionarToken(Token token)
     {
+        if (tokensJogador.Count >= limiteEspaco)
+        {
+            Debug.Log("Inventário cheio! Não é possível adicionar mais tokens.");
+            return false;
+        }
         tokensJogador.Add(token);
-        Debug.Log($"Token adicionado ao inventário: {token.nomeDoToken}");
+        return true;
     }
 
     public List<Token> ObterTokens()
@@ -32,8 +43,19 @@ public class Inventario : MonoBehaviour
         return tokensJogador;
     }
 
-    public void LimparInventario()
+    /// <summary>
+    /// Verifica se há espaço suficiente para adicionar uma quantidade de tokens.
+    /// </summary>
+    public bool TemEspacoParaAdicionar(int quantidade)
     {
-        tokensJogador.Clear();
+        return (tokensJogador.Count + quantidade) <= limiteEspaco;
+    }
+
+    /// <summary>
+    /// Verifica se o inventário está cheio.
+    /// </summary>
+    public bool EstaCheio()
+    {
+        return tokensJogador.Count >= limiteEspaco;
     }
 }

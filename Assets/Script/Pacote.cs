@@ -20,6 +20,7 @@ public class Pacote : MonoBehaviour
     [Range(0, 100)] public int chanceRaro = 10;
     [Range(0, 100)] public int chanceEpico = 4;
     [Range(0, 100)] public int chanceLendario = 1;
+    [Range(0, 100)] public int chanceMitico = 0; // nova linha para mitico
 
     public int preco1Token = 500;
     public int preco10Tokens = 4000;
@@ -33,13 +34,15 @@ public class Pacote : MonoBehaviour
     public Image imagemToken;
     public Text textoNomeToken;
 
+    [Header("Painel Aviso Inventário Cheio")]
+    public GameObject painelInventarioCheio; // Opcional: painel para mostrar msg de inventário cheio
+
     private List<Token> tokensParaRevelar = new List<Token>();
     private int indiceTokenAtual = 0;
     private bool revelando = false;
 
     void Start()
     {
-        // Liga eventos dos botões
         if (botaoAbrir1 != null)
         {
             botaoAbrir1.onClick.RemoveAllListeners();
@@ -53,20 +56,37 @@ public class Pacote : MonoBehaviour
 
         if (painelReveal != null)
             painelReveal.SetActive(false);
+
+        if (painelInventarioCheio != null)
+            painelInventarioCheio.SetActive(false);
     }
 
     public void Abrir1Token()
     {
         if (revelando) return;
+
+        // Verifica se o inventário está cheio antes de gastar moedas
+        if (Inventario.instance == null || Inventario.instance.EstaCheio())
+        {
+            MostrarPainelInventarioCheio("Inventário cheio! Não é possível roletar.");
+            return;
+        }
+
         if (Moeda.instance.GastarMoedas(preco1Token))
         {
             Token sorteado = SorteiaToken();
             if (sorteado != null)
             {
-                Inventario.instance.AdicionarToken(sorteado);
-                tokensParaRevelar = new List<Token> { sorteado };
-                indiceTokenAtual = 0;
-                MostrarPainelRevelacao();
+                if (Inventario.instance.AdicionarToken(sorteado))
+                {
+                    tokensParaRevelar = new List<Token> { sorteado };
+                    indiceTokenAtual = 0;
+                    MostrarPainelRevelacao();
+                }
+                else
+                {
+                    MostrarPainelInventarioCheio("Inventário cheio! Não é possível adicionar o token.");
+                }
             }
         }
         else
@@ -78,6 +98,14 @@ public class Pacote : MonoBehaviour
     public void Abrir10Tokens()
     {
         if (revelando) return;
+
+        // Verifica se há espaço suficiente para 10 tokens
+        if (Inventario.instance == null || !Inventario.instance.TemEspacoParaAdicionar(10))
+        {
+            MostrarPainelInventarioCheio("Espaço insuficiente no inventário para 10 tokens.");
+            return;
+        }
+
         if (Moeda.instance.GastarMoedas(preco10Tokens))
         {
             tokensParaRevelar = new List<Token>();
@@ -86,8 +114,16 @@ public class Pacote : MonoBehaviour
                 Token sorteado = SorteiaToken();
                 if (sorteado != null)
                 {
-                    Inventario.instance.AdicionarToken(sorteado);
-                    tokensParaRevelar.Add(sorteado);
+                    if (Inventario.instance.AdicionarToken(sorteado))
+                    {
+                        tokensParaRevelar.Add(sorteado);
+                    }
+                    else
+                    {
+                        // Caso algum token não possa ser adicionado (difícil acontecer aqui)
+                        MostrarPainelInventarioCheio("Inventário ficou cheio durante a roleta.");
+                        break;
+                    }
                 }
             }
             if (tokensParaRevelar.Count > 0)
@@ -112,13 +148,27 @@ public class Pacote : MonoBehaviour
         }
     }
 
+    void MostrarPainelInventarioCheio(string mensagem)
+    {
+        if (painelInventarioCheio != null)
+        {
+            painelInventarioCheio.SetActive(true);
+            Text texto = painelInventarioCheio.GetComponentInChildren<Text>();
+            if (texto != null)
+                texto.text = mensagem;
+        }
+        else
+        {
+            Debug.Log(mensagem);
+        }
+    }
+
     void MostrarTokenAtual()
     {
         if (tokensParaRevelar == null || tokensParaRevelar.Count == 0) return;
         Token token = tokensParaRevelar[indiceTokenAtual];
         textoNomeToken.text = token.nomeDoToken + " (" + token.raridade + ")";
 
-        // Usa o SpriteRenderer do prefab do Token para mostrar a imagem
         SpriteRenderer sr = token.GetComponent<SpriteRenderer>();
         if (sr != null && sr.sprite != null)
         {
@@ -168,6 +218,7 @@ public class Pacote : MonoBehaviour
         if (rand <= chanceComum + chanceIncomum) return Token.Raridade.Incomum;
         if (rand <= chanceComum + chanceIncomum + chanceRaro) return Token.Raridade.Raro;
         if (rand <= chanceComum + chanceIncomum + chanceRaro + chanceEpico) return Token.Raridade.Epico;
-        return Token.Raridade.Lendario;
+        if (rand <= chanceComum + chanceIncomum + chanceRaro + chanceEpico + chanceLendario) return Token.Raridade.Lendario;
+        return Token.Raridade.Mitico;
     }
 }
