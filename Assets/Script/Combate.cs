@@ -7,9 +7,9 @@ public class Combate : MonoBehaviour
 {
     private Mana manaScript;
     private Slots slotsScript;
-    private Caixa caixaScript; // Referência ao script Caixa
+    private Caixa caixaScript; // Refer�ncia ao script Caixa
 
-    [Header("Prefabs de Tokens Disponíveis")]
+    [Header("Prefabs de Tokens Dispon�veis")]
     public List<GameObject> todosOsTokens;
 
     [Header("Locais Especiais")]
@@ -39,11 +39,6 @@ public class Combate : MonoBehaviour
     public Button botaoAtacar;
     public Button botaoStatus;
 
-    // Elementos para habilidade especial
-    [Header("Especial")]
-    public Button botaoEspecial; // Botão para usar habilidade especial
-    public TextMeshProUGUI textoEspecialInfo; // Texto de info sobre custo e dano da habilidade
-
     private GameObject tokenPlayerEmDuelo;
     private GameObject tokenOponenteEmDuelo;
     private bool tokenPlayerAtacou = false;
@@ -58,7 +53,7 @@ public class Combate : MonoBehaviour
 
         if (slotsScript == null || manaScript == null || caixaScript == null)
         {
-            Debug.LogError("Um dos scripts (Slots, Mana ou Caixa) não foi encontrado na cena.");
+            Debug.LogError("Um dos scripts (Slots, Mana ou Caixa) n�o foi encontrado na cena.");
             enabled = false;
             return;
         }
@@ -72,12 +67,6 @@ public class Combate : MonoBehaviour
         botaoJogar.onClick.AddListener(JogarToken);
         botaoDetalhes.onClick.AddListener(MostrarDetalhes);
         botaoCancelar.onClick.AddListener(CancelarSelecao);
-
-        // Inicializa o botão e texto do especial se existirem
-        if (botaoEspecial != null)
-            botaoEspecial.gameObject.SetActive(false);
-        if (textoEspecialInfo != null)
-            textoEspecialInfo.gameObject.SetActive(false);
     }
 
     void Update()
@@ -109,31 +98,13 @@ public class Combate : MonoBehaviour
 
             botaoStatus.onClick.RemoveAllListeners();
             botaoStatus.onClick.AddListener(() => MostrarStatusDuelo(tokenOponenteEmDuelo));
-
-            // HABILIDADE ESPECIAL - mostrar botão e configurar evento
-            if (botaoEspecial != null && textoEspecialInfo != null && tokenPlayerEmDuelo != null)
-            {
-                Token tPlayer = tokenPlayerEmDuelo.GetComponent<Token>();
-                botaoEspecial.gameObject.SetActive(true);
-                textoEspecialInfo.gameObject.SetActive(true);
-                textoEspecialInfo.text = $"Especial: Dano {tPlayer.danoEspecial}, Mana {tPlayer.custoManaEspecial}";
-                botaoEspecial.onClick.RemoveAllListeners();
-                botaoEspecial.onClick.AddListener(() => UsarHabilidadeEspecial());
-                botaoEspecial.interactable = manaScript.manaPlayer >= tPlayer.custoManaEspecial;
-            }
         }
         else
         {
             painelCombate.SetActive(false);
-
-            // Esconde o botão e info do especial
-            if (botaoEspecial != null)
-                botaoEspecial.gameObject.SetActive(false);
-            if (textoEspecialInfo != null)
-                textoEspecialInfo.gameObject.SetActive(false);
         }
 
-        // Lógica de compra automática do oponente
+        // L�gica de compra autom�tica do oponente
         contadorTempoCompraOponente += Time.deltaTime;
         if (contadorTempoCompraOponente >= tempoParaCompraOponente)
         {
@@ -147,7 +118,7 @@ public class Combate : MonoBehaviour
 
     void GerarTokensIniciais()
     {
-        int quantidadeParaCadaLado = Mathf.Min(5, slotsScript.playerSlots.Count); // Garante que não gere mais tokens que slots
+        int quantidadeParaCadaLado = Mathf.Min(5, slotsScript.playerSlots.Count); // Garante que n�o gere mais tokens que slots
         for (int i = 0; i < quantidadeParaCadaLado; i++)
         {
             GerarEColocarTokenInicial(true);
@@ -291,7 +262,7 @@ public class Combate : MonoBehaviour
             }
         }
 
-        // Se não houver token para jogar, tenta comprar um
+        // Se n�o houver token para jogar, tenta comprar um
         if (tokenOponenteEmDuelo == null && caixaScript != null && slotsScript.OponenteSlotDisponivel())
         {
             caixaScript.OponenteTentarComprarToken();
@@ -339,13 +310,13 @@ public class Combate : MonoBehaviour
             }
             else
             {
-                Debug.LogError("O token encontrado não possui o componente 'Token'.");
+                Debug.LogError("O token encontrado n�o possui o componente 'Token'.");
                 painelDeDetalhes.SetActive(false);
             }
         }
         else
         {
-            Debug.Log("Nenhum token válido do player para mostrar os detalhes.");
+            Debug.Log("Nenhum token v�lido do player para mostrar os detalhes.");
             painelDeDetalhes.SetActive(false);
         }
     }
@@ -409,74 +380,6 @@ public class Combate : MonoBehaviour
         Invoke("ContraAtaqueOponente", 1.0f);
     }
 
-    // Uso da habilidade especial do token do player
-    void UsarHabilidadeEspecial()
-    {
-        if (tokenPlayerEmDuelo == null || tokenOponenteEmDuelo == null) return;
-        Token tPlayer = tokenPlayerEmDuelo.GetComponent<Token>();
-        Token tOponente = tokenOponenteEmDuelo.GetComponent<Token>();
-
-        if (manaScript.manaPlayer < tPlayer.custoManaEspecial)
-        {
-            Debug.Log("Mana insuficiente para usar a habilidade especial.");
-            return;
-        }
-
-        bool gastouMana = manaScript.GastarManaPlayer(tPlayer.custoManaEspecial);
-        if (!gastouMana)
-        {
-            Debug.Log("Erro ao gastar a mana para habilidade especial.");
-            return;
-        }
-
-        tOponente.ReceberDano(tPlayer.danoEspecial, tPlayer);
-        Debug.Log($"Habilidade Especial: Oponente perdeu {tPlayer.danoEspecial} de vida. Vida restante: {tOponente.vida}");
-
-        tokenPlayerAtacou = true;
-
-        if (!tOponente.estaVivo)
-        {
-            string tagVencedor = "Token Player";
-            Token.Raridade raridadeTokenDerrotado = tOponente.raridade;
-            Destroy(tokenOponenteEmDuelo);
-            tokenOponenteEmDuelo = null;
-            tokenPlayerAtacou = false;
-            manaScript.AdicionarManaPorRaridade(raridadeTokenDerrotado, tagVencedor);
-
-            Invoke("TentarNovoTokenOponente", 1.0f);
-            return;
-        }
-
-        Invoke("ContraAtaqueOponente", 1.0f);
-    }
-
-    // Uso da habilidade especial do oponente (aleatório)
-    void OponenteUsarHabilidadeEspecial()
-    {
-        if (tokenPlayerEmDuelo == null || tokenOponenteEmDuelo == null) return;
-        Token tOponente = tokenOponenteEmDuelo.GetComponent<Token>();
-        Token tPlayer = tokenPlayerEmDuelo.GetComponent<Token>();
-
-        if (manaScript.manaOponente < tOponente.custoManaEspecial)
-            return;
-
-        bool gastouMana = manaScript.GastarManaOponente(tOponente.custoManaEspecial);
-        if (!gastouMana)
-            return;
-
-        tPlayer.ReceberDano(tOponente.danoEspecial, tOponente);
-        Debug.Log($"Oponente usou habilidade especial! Player perdeu {tOponente.danoEspecial} de vida. Vida restante: {tPlayer.vida}");
-
-        if (!tPlayer.estaVivo)
-        {
-            string tagVencedor = "Token Oponente";
-            Token.Raridade raridadeTokenDerrotado = tPlayer.raridade;
-            Destroy(tokenPlayerEmDuelo);
-            tokenPlayerEmDuelo = null;
-            manaScript.AdicionarManaPorRaridade(raridadeTokenDerrotado, tagVencedor);
-        }
-    }
-
     void ContraAtaqueOponente()
     {
         if (tokenPlayerAtacou && tokenPlayerEmDuelo != null && tokenOponenteEmDuelo != null)
@@ -484,29 +387,18 @@ public class Combate : MonoBehaviour
             Token tPlayer = tokenPlayerEmDuelo.GetComponent<Token>();
             Token tOponente = tokenOponenteEmDuelo.GetComponent<Token>();
 
-            // Decide aleatoriamente se o oponente usará o ataque normal ou especial
-            bool podeUsarEspecial = manaScript.manaOponente >= tOponente.custoManaEspecial;
-            bool usarEspecial = podeUsarEspecial && Random.value < 0.5f; // 50% de chance
+            tPlayer.ReceberDano(tOponente.dano, tOponente);
+            Debug.Log($"Player perdeu {tOponente.dano} de vida. Vida restante: {tPlayer.vida}");
 
-            if (usarEspecial)
+            if (!tPlayer.estaVivo)
             {
-                OponenteUsarHabilidadeEspecial();
+                string tagVencedor = "Token Oponente";
+                Token.Raridade raridadeTokenDerrotado = tPlayer.raridade;
+                Destroy(tokenPlayerEmDuelo);
+                tokenPlayerEmDuelo = null;
+                manaScript.AdicionarManaPorRaridade(raridadeTokenDerrotado, tagVencedor);
             }
-            else
-            {
-                // Ataque normal
-                tPlayer.ReceberDano(tOponente.dano, tOponente);
-                Debug.Log($"Player perdeu {tOponente.dano} de vida. Vida restante: {tPlayer.vida}");
 
-                if (!tPlayer.estaVivo)
-                {
-                    string tagVencedor = "Token Oponente";
-                    Token.Raridade raridadeTokenDerrotado = tPlayer.raridade;
-                    Destroy(tokenPlayerEmDuelo);
-                    tokenPlayerEmDuelo = null;
-                    manaScript.AdicionarManaPorRaridade(raridadeTokenDerrotado, tagVencedor);
-                }
-            }
             tokenPlayerAtacou = false;
         }
     }
@@ -546,7 +438,7 @@ public class Combate : MonoBehaviour
             }
         }
 
-        // Se não houver token para jogar, tenta comprar um
+        // Se n�o houver token para jogar, tenta comprar um
         if (tokenOponenteEmDuelo == null && caixaScript != null && slotsScript.OponenteSlotDisponivel())
         {
             caixaScript.OponenteTentarComprarToken();

@@ -38,7 +38,9 @@ public class Token : MonoBehaviour
         Raro,
         Epico,
         Lendario,
-        Mitico
+        Mitico,
+        Alter,
+        Potencial
     }
 
     public void Atacar(Token alvo)
