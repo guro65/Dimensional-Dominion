@@ -102,7 +102,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 161bb0b1c7631a94287f4c1df33457c2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  snapDistance: 2.92
+  snapDistance: 3
 --- !u!114 &6011708629460344610
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -116,15 +116,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   nomeDoToken: Eyes
-  dano: 10
+  danoBase: 3
   vida: 100
   manaCusto: 0
   raridade: 0
   chanceDeAparicao: 75
-  danoEspecial: 8
+  PosicaoNoTab: 0
+  tokenType: 0
+  buffType: 0
+  buffPercentage: 0
+  danoEspecialBase: 8
   custoManaEspecial: 5
   habilidadeAtivada: 0
-  PosicaoNoTab: 0
 --- !u!61 &962127389986738185
 BoxCollider2D:
   m_ObjectHideFlags: 0

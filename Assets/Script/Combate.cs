@@ -2,6 +2,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro; // Certifique-se de que TMPro está sendo usado para TextMeshProUGUI
+using System.Linq; // Para OrderBy
 
 public class Combate : MonoBehaviour
 {
@@ -24,6 +25,7 @@ public class Combate : MonoBehaviour
     public TextMeshProUGUI textoRaridade;
     public TextMeshProUGUI textoNome;
     public TextMeshProUGUI textoManaCusto;
+    public TextMeshProUGUI textoBuffInfo; // Novo para exibir informações de buff
     public Image imagemToken;
 
     [HideInInspector] public GameObject tokenAtualSelecionado;
@@ -64,8 +66,8 @@ public class Combate : MonoBehaviour
         {
             MostrarDetalhesUI(); // Isso ativa o painelDeDetalhes
 
-            // Lógica para mostrar o botão de habilidade especial (apenas para o player no seu turno)
-            if (tokenAtualSelecionado.CompareTag("Token Player") && turnManager.turnoAtual == TurnManager.Turno.Player)
+            // Lógica para mostrar o botão de habilidade especial (apenas para o player no seu turno E se for um token de Dano)
+            if (tokenAtualSelecionado.CompareTag("Token Player") && turnManager.turnoAtual == TurnManager.Turno.Player && tokenScript.tokenType == Token.TokenType.Dano)
             {
                 painelDeAcoes.SetActive(true);
                 // Habilita o botão apenas se tiver mana suficiente e a habilidade não estiver já ativada
@@ -73,7 +75,7 @@ public class Combate : MonoBehaviour
             }
             else
             {
-                painelDeAcoes.SetActive(false); // Esconde se não for para habilidade (oponente ou turno errado)
+                painelDeAcoes.SetActive(false); // Esconde se não for para habilidade (oponente, turno errado, ou token de buff)
             }
         }
         else
@@ -111,7 +113,9 @@ public class Combate : MonoBehaviour
 
         if (slotVazio != null)
         {
-            GameObject tokenPrefab = EscolherTokenPorChance();
+            // Pega o buff de sorte do jogador ou oponente
+            float luckBuff = turnManager.GetTotalLuckBuffPercentage(paraPlayer);
+            GameObject tokenPrefab = EscolherTokenPorChance(luckBuff);
             if (tokenPrefab != null)
             {
                 GameObject tokenInstanciado = Instantiate(tokenPrefab, slotVazio.position, Quaternion.identity);
@@ -135,26 +139,64 @@ public class Combate : MonoBehaviour
         }
     }
 
-    public GameObject EscolherTokenPorChance()
+    public GameObject EscolherTokenPorChance(float luckBuffPercentage)
     {
-        float totalChance = 0f;
-        foreach (GameObject token in todosOsTokens)
+        List<Token> todosTokensScripts = todosOsTokens.Select(go => go.GetComponent<Token>()).ToList();
+
+        // Ajustar chances com base no buff de Sorte
+        // Aumenta a chance de épicas, lendárias, míticas
+        // Diminui a chance de comuns e raras
+        // As porcentagens negativas aqui são para diminuir a chance, mas o totalChance não deve ser negativo
+        Dictionary<Token.Raridade, float> chanceModificadores = new Dictionary<Token.Raridade, float>()
         {
-            Token dados = token.GetComponent<Token>();
-            totalChance += dados.chanceDeAparicao;
+            { Token.Raridade.Comum, -0.015f }, // -1.5%
+            { Token.Raridade.Incomum, -0.01f }, // -1%
+            { Token.Raridade.Raro, -0.005f }, // -0.5%
+            { Token.Raridade.Epico, 0.005f }, // +0.5%
+            { Token.Raridade.Lendario, 0.01f }, // +1%
+            { Token.Raridade.Mitico, 0.015f }, // +1.5%
+            { Token.Raridade.Alter, 0f }, // Sem alteração
+            { Token.Raridade.Potencial, 0f } // Sem alteração
+        };
+
+        float totalAdjustedChance = 0f;
+        List<(Token token, float adjustedChance)> adjustedChances = new List<(Token, float)>();
+
+        foreach (Token token in todosTokensScripts)
+        {
+            float baseChance = token.chanceDeAparicao;
+            float modifier = 0;
+            if (chanceModificadores.ContainsKey(token.raridade))
+            {
+                // Aplica o modificador base multiplicado pela porcentagem de sorte
+                modifier = chanceModificadores[token.raridade] * (luckBuffPercentage / 100f);
+            }
+            float adjustedChance = baseChance * (1 + modifier);
+            
+            // Garante que a chance não seja negativa
+            adjustedChance = Mathf.Max(0f, adjustedChance);
+            
+            adjustedChances.Add((token, adjustedChance));
+            totalAdjustedChance += adjustedChance;
         }
 
-        float randomValue = Random.Range(0f, totalChance);
+        if (totalAdjustedChance <= 0) // Fallback para evitar divisão por zero
+        {
+            Debug.LogWarning("Total de chances ajustadas é zero ou negativo. Gerando um token aleatório sem sorte.");
+            return todosOsTokens[Random.Range(0, todosOsTokens.Count)];
+        }
+
+        float randomValue = Random.Range(0f, totalAdjustedChance);
         float acumulado = 0f;
 
-        foreach (GameObject token in todosOsTokens)
+        foreach (var item in adjustedChances)
         {
-            Token dados = token.GetComponent<Token>();
-            acumulado += dados.chanceDeAparicao;
+            acumulado += item.adjustedChance;
             if (randomValue <= acumulado)
-                return token;
+                return item.token.gameObject;
         }
-        return null; // Caso não encontre nenhum token (improvável se totalChance > 0)
+        
+        return null; // Caso não encontre nenhum token (improvável se totalAdjustedChance > 0)
     }
 
     void MostrarDetalhesUI()
@@ -165,10 +207,25 @@ public class Combate : MonoBehaviour
             if (dados != null)
             {
                 textoNome.text = dados.nomeDoToken;
-                textoDano.text = $"Dano: {dados.dano}";
-                textoVida.text = $"Vida: {dados.vida}";
-                textoManaCusto.text = $"Custo: {dados.manaCusto}"; // Agora é o custo para jogar
+                textoManaCusto.text = $"Custo: {dados.manaCusto}";
                 textoRaridade.text = $"Raridade: {dados.raridade}";
+
+                // Exibir informações baseadas no tipo de token
+                if (dados.tokenType == Token.TokenType.Dano)
+                {
+                    textoDano.gameObject.SetActive(true);
+                    textoVida.gameObject.SetActive(true);
+                    textoBuffInfo.gameObject.SetActive(false); // Esconde info de buff
+                    textoDano.text = $"Dano: {dados.danoBase}";
+                    textoVida.text = $"Vida: {dados.vida}";
+                }
+                else if (dados.tokenType == Token.TokenType.Buff)
+                {
+                    textoDano.gameObject.SetActive(false); // Esconde dano
+                    textoVida.gameObject.SetActive(false); // Esconde vida
+                    textoBuffInfo.gameObject.SetActive(true); // Mostra info de buff
+                    textoBuffInfo.text = $"Buff: {dados.buffType} ({dados.buffPercentage}%)";
+                }
 
                 SpriteRenderer spriteRenderer = tokenAtualSelecionado.GetComponent<SpriteRenderer>();
                 if (spriteRenderer != null)
@@ -202,16 +259,22 @@ public class Combate : MonoBehaviour
             Token tokenScript = tokenAtualSelecionado.GetComponent<Token>();
             if (tokenScript != null)
             {
-                if (manaScript.GastarManaPlayer(tokenScript.custoManaEspecial))
+                // Apenas tokens de Dano podem ter habilidade especial ativada manualmente
+                if (tokenScript.tokenType == Token.TokenType.Dano)
                 {
-                    tokenScript.habilidadeAtivada = true; // Apenas marca a flag
-                    Debug.Log($"Habilidade especial de {tokenScript.nomeDoToken} ativada! O dano será aplicado no próximo ataque.");
-                    painelDeAcoes.SetActive(false);
-                    FecharDetalhes();
-                }
-                else
-                {
-                    Debug.Log("Mana insuficiente para usar a habilidade especial.");
+                    if (manaScript.GastarManaPlayer(tokenScript.custoManaEspecial))
+                    {
+                        tokenScript.habilidadeAtivada = true; // Apenas marca a flag
+                        Debug.Log($"Habilidade especial de {tokenScript.nomeDoToken} ativada! O dano será aplicado no próximo ataque.");
+                        painelDeAcoes.SetActive(false);
+                        FecharDetalhes();
+                    }
+                    else
+                    {
+                        Debug.Log("Mana insuficiente para usar a habilidade especial.");
+                    }
+                } else {
+                    Debug.LogWarning("Tokens de Buff não possuem habilidade especial ativável.");
                 }
             }
         }

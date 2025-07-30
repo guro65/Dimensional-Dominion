@@ -4,16 +4,11 @@ public class Token : MonoBehaviour
 {
     [Header("Dados do Token")]
     public string nomeDoToken;
-    public int dano;
+    public int danoBase; // Dano base do token, sem buffs
     public int vida;
     public int manaCusto; // Custo para jogar o token
     public Raridade raridade;
     public float chanceDeAparicao = 25f;
-
-    [Header("Habilidade Especial do Token")]
-    public int danoEspecial = 8;        // Dano da habilidade especial deste token
-    public int custoManaEspecial = 5;   // Custo de mana para usar a habilidade especial deste token
-    public bool habilidadeAtivada = false; // Flag para habilidade ativada no turno
 
     public enum Raridade
     {
@@ -36,6 +31,29 @@ public class Token : MonoBehaviour
     }
     public PosicaoTabuleiro PosicaoNoTab = PosicaoTabuleiro.NaoNoTabuleiro;
 
+    // --- Novas Adições para Sistema de Buff ---
+    public enum TokenType // Tipo de Token: Dano normal ou Buff
+    {
+        Dano,
+        Buff
+    }
+    public TokenType tokenType = TokenType.Dano; // Padrão é token de Dano
+
+    public enum BuffType // Tipo específico de Buff (se TokenType for Buff)
+    {
+        None,   // Sem buff
+        Sorte,  // Aumenta chances de raridades altas
+        Forca,  // Aumenta dano de todas as cartas
+        Energia // Aumenta mana ganha ao derrotar cartas
+    }
+    public BuffType buffType = BuffType.None; // Padrão é sem buff
+    [Range(0, 100)] public float buffPercentage = 0; // Porcentagem do buff (0-100)
+
+    [Header("Habilidade Especial do Token")]
+    public int danoEspecialBase = 8;        // Dano base da habilidade especial
+    public int custoManaEspecial = 5;       // Custo de mana para usar a habilidade especial
+    public bool habilidadeAtivada = false; // Flag para habilidade ativada no turno
+
     private Mana manaScript;
     private TurnManager turnManager; // Referência ao TurnManager
 
@@ -54,23 +72,27 @@ public class Token : MonoBehaviour
         }
     }
 
-    public void Atacar(Token alvo)
+    public void Atacar(Token alvo, float forcaBuffPercent) // Recebe o buff de força
     {
         if (alvo != null && estaVivo)
         {
-            Debug.Log($"{nomeDoToken} atacou {alvo.nomeDoToken} causando {dano} de dano.");
-            alvo.ReceberDano(dano, this);
+            int danoEfetivo = Mathf.RoundToInt(danoBase * (1 + (forcaBuffPercent / 100f)));
+            Debug.Log($"{nomeDoToken} atacou {alvo.nomeDoToken} causando {danoEfetivo} de dano (com {forcaBuffPercent}% Força Buff).");
+            alvo.ReceberDano(danoEfetivo, this);
+        } else {
+            Debug.LogWarning($"{nomeDoToken} tentou atacar mas o alvo é nulo ou o atacante não está vivo.");
         }
     }
 
-    public void UsarHabilidadeEspecial(Token alvo)
+    public void UsarHabilidadeEspecial(Token alvo, float forcaBuffPercent) // Recebe o buff de força
     {
-        if (manaScript != null)
+        if (alvo != null && estaVivo)
         {
-            // O gasto de mana para a habilidade é verificado e gasto no Combate.cs ou TurnManager.cs (quando ativada a flag)
-            // Aqui, apenas executa o efeito se a flag está ativada.
-            Debug.Log($"{nomeDoToken} (Habilidade Especial) atacou {alvo.nomeDoToken} causando {danoEspecial} de dano.");
-            alvo.ReceberDano(danoEspecial, this);
+            int danoEfetivo = Mathf.RoundToInt(danoEspecialBase * (1 + (forcaBuffPercent / 100f)));
+            Debug.Log($"{nomeDoToken} (Habilidade Especial) atacou {alvo.nomeDoToken} causando {danoEfetivo} de dano (com {forcaBuffPercent}% Força Buff).");
+            alvo.ReceberDano(danoEfetivo, this);
+        } else {
+             Debug.LogWarning($"{nomeDoToken} tentou usar habilidade especial mas o alvo é nulo ou o atacante não está vivo.");
         }
     }
 
@@ -85,7 +107,9 @@ public class Token : MonoBehaviour
                 string tagDoVencedor = atacante.CompareTag("Token Player") ? "Token Player" : (atacante.CompareTag("Token Oponente") ? "Token Oponente" : "");
                 if (!string.IsNullOrEmpty(tagDoVencedor))
                 {
-                    manaScript.AdicionarManaPorRaridade(raridade, tagDoVencedor);
+                    // Passa o percentual de buff de Energia do vencedor para o script Mana
+                    float energiaBuffPercent = turnManager.GetTotalEnergyBuffPercentage(tagDoVencedor == "Token Player");
+                    manaScript.AdicionarManaPorRaridade(raridade, tagDoVencedor, energiaBuffPercent);
                     Debug.Log($"{tagDoVencedor} ganhou mana por derrotar {nomeDoToken}.");
                 }
             }

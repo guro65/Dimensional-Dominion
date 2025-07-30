@@ -7,16 +7,18 @@ public class Caixa : MonoBehaviour
     private Combate combateScript;
     private Mana manaScript;
     private Slots slotsScript;
+    private TurnManager turnManager; // Adicionar referência ao TurnManager
 
     void Start()
     {
         combateScript = FindObjectOfType<Combate>();
         manaScript = FindObjectOfType<Mana>();
         slotsScript = FindObjectOfType<Slots>();
+        turnManager = FindObjectOfType<TurnManager>(); // Inicializar TurnManager
 
-        if (combateScript == null || manaScript == null || slotsScript == null)
+        if (combateScript == null || manaScript == null || slotsScript == null || turnManager == null) // Verificar TurnManager
         {
-            Debug.LogError("Um dos scripts (Combate, Mana ou Slots) não foi encontrado na cena.");
+            Debug.LogError("Um dos scripts (Combate, Mana, Slots ou TurnManager) não foi encontrado na cena.");
             enabled = false;
         }
     }
@@ -53,9 +55,11 @@ public class Caixa : MonoBehaviour
 
     void GerarEColocarTokenNaMao(bool paraPlayer)
     {
-        if (combateScript != null)
+        if (combateScript != null && turnManager != null)
         {
-            GameObject tokenPrefab = combateScript.EscolherTokenPorChance();
+            // Pega o buff de sorte do jogador ou oponente
+            float luckBuff = turnManager.GetTotalLuckBuffPercentage(paraPlayer);
+            GameObject tokenPrefab = combateScript.EscolherTokenPorChance(luckBuff);
             if (tokenPrefab != null)
             {
                 Transform slotVazio = null;
@@ -104,13 +108,18 @@ public class Caixa : MonoBehaviour
     {
         if (slotsScript.OponenteHandSlotDisponivel())
         {
+            // O oponente gasta mana para comprar o token
             if (manaScript.manaOponente >= precoCompra)
             {
                 manaScript.GastarManaOponente(precoCompra);
                 GerarEColocarTokenNaMao(false);
                 precoCompra *= 2;
                 Debug.Log($"Oponente comprou um token. Novo preço: {precoCompra}");
+            } else {
+                Debug.Log("Oponente não tem mana suficiente para comprar o token.");
             }
+        } else {
+            Debug.Log("Oponente não tem espaço na mão para comprar um token.");
         }
     }
 

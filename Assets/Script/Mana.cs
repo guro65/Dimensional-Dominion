@@ -61,28 +61,32 @@ public class Mana : MonoBehaviour
         if (textoManaOponente != null) textoManaOponente.text = $"Mana: {manaOponente}";
     }
 
-    public void AdicionarManaPorRaridade(Token.Raridade raridadeToken, string tagDoVencedor)
+    public void AdicionarManaPorRaridade(Token.Raridade raridadeToken, string tagDoVencedor, float energiaBuffPercent)
     {
-        int manaRecebida = 0;
+        int manaRecebidaBase = 0;
 
         foreach (var config in manaPorRaridade)
         {
             if (config.raridade == raridadeToken)
             {
-                manaRecebida = config.manaRecebida;
+                manaRecebidaBase = config.manaRecebida;
                 break;
             }
         }
 
+        // Aplica o buff de energia
+        int manaRecebidaFinal = Mathf.RoundToInt(manaRecebidaBase * (1 + (energiaBuffPercent / 100f)));
+
         if (tagDoVencedor == "Token Player")
         {
-            manaPlayer += manaRecebida;
+            manaPlayer += manaRecebidaFinal;
         }
         else if (tagDoVencedor == "Token Oponente")
         {
-            manaOponente += manaRecebida;
+            manaOponente += manaRecebidaFinal;
         }
 
+        Debug.Log($"Adicionado {manaRecebidaFinal} de mana ({manaRecebidaBase} base + {energiaBuffPercent}% buff) para {tagDoVencedor}.");
         AtualizarManaUI();
     }
 }

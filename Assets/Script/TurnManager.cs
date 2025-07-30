@@ -25,7 +25,6 @@ public class TurnManager : MonoBehaviour
     public float minDelayOponenteAcao = 0.5f;
     public float maxDelayOponenteAcao = 1.5f;
 
-
     private Slots slotsScript;
     private Mana manaScript;
     private Caixa caixaScript;
@@ -33,6 +32,10 @@ public class TurnManager : MonoBehaviour
 
     private List<GameObject> tokensJogadosNesteTurnoPlayer = new List<GameObject>();
     private List<GameObject> tokensJogadosNesteTurnoOponente = new List<GameObject>();
+
+    // --- Novas Adições para Sistema de Buff ---
+    private List<Token> playerActiveBuffs = new List<Token>();
+    private List<Token> oponenteActiveBuffs = new List<Token>();
 
     void Start()
     {
@@ -55,25 +58,107 @@ public class TurnManager : MonoBehaviour
         AtualizarTextoTurno();
     }
 
-    public void AdicionarTokenJogado(GameObject token)
+    public void AdicionarTokenJogado(GameObject tokenGO)
     {
-        if (token.CompareTag("Token Player"))
+        Token token = tokenGO.GetComponent<Token>();
+        if (token == null) return;
+
+        if (tokenGO.CompareTag("Token Player"))
         {
-            if (!tokensJogadosNesteTurnoPlayer.Contains(token))
-                tokensJogadosNesteTurnoPlayer.Add(token);
+            if (!tokensJogadosNesteTurnoPlayer.Contains(tokenGO))
+                tokensJogadosNesteTurnoPlayer.Add(tokenGO);
+            
+            // Adiciona aos buffs ativos se for um token de buff
+            if (token.tokenType == Token.TokenType.Buff && !playerActiveBuffs.Contains(token))
+            {
+                playerActiveBuffs.Add(token);
+                Debug.Log($"Buff {token.buffType} ({token.buffPercentage}%) do Player ativado: {token.nomeDoToken}");
+            }
         }
-        else if (token.CompareTag("Token Oponente"))
+        else if (tokenGO.CompareTag("Token Oponente"))
         {
-            if (!tokensJogadosNesteTurnoOponente.Contains(token))
-                tokensJogadosNesteTurnoOponente.Add(token);
+            if (!tokensJogadosNesteTurnoOponente.Contains(tokenGO))
+                tokensJogadosNesteTurnoOponente.Add(tokenGO);
+
+            // Adiciona aos buffs ativos se for um token de buff
+            if (token.tokenType == Token.TokenType.Buff && !oponenteActiveBuffs.Contains(token))
+            {
+                oponenteActiveBuffs.Add(token);
+                Debug.Log($"Buff {token.buffType} ({token.buffPercentage}%) do Oponente ativado: {token.nomeDoToken}");
+            }
         }
     }
 
-    public void RemoverTokenDerrotado(GameObject token)
+    public void RemoverTokenDerrotado(GameObject tokenGO)
     {
-        tokensJogadosNesteTurnoPlayer.Remove(token);
-        tokensJogadosNesteTurnoOponente.Remove(token);
+        tokensJogadosNesteTurnoPlayer.Remove(tokenGO);
+        tokensJogadosNesteTurnoOponente.Remove(tokenGO);
+
+        Token token = tokenGO.GetComponent<Token>();
+        if (token != null)
+        {
+            // Remove dos buffs ativos se for um token de buff
+            if (tokenGO.CompareTag("Token Player"))
+            {
+                if (playerActiveBuffs.Remove(token))
+                {
+                    Debug.Log($"Buff {token.buffType} ({token.buffPercentage}%) do Player desativado: {token.nomeDoToken}");
+                }
+            }
+            else if (tokenGO.CompareTag("Token Oponente"))
+            {
+                if (oponenteActiveBuffs.Remove(token))
+                {
+                    Debug.Log($"Buff {token.buffType} ({token.buffPercentage}%) do Oponente desativado: {token.nomeDoToken}");
+                }
+            }
+        }
     }
+
+    // --- Funções para obter o total de buffs ativos ---
+    public float GetTotalLuckBuffPercentage(bool isPlayer)
+    {
+        float total = 0f;
+        List<Token> activeBuffs = isPlayer ? playerActiveBuffs : oponenteActiveBuffs;
+        foreach (Token buffToken in activeBuffs)
+        {
+            if (buffToken.buffType == Token.BuffType.Sorte)
+            {
+                total += buffToken.buffPercentage;
+            }
+        }
+        return total;
+    }
+
+    public float GetTotalStrengthBuffPercentage(bool isPlayer)
+    {
+        float total = 0f;
+        List<Token> activeBuffs = isPlayer ? playerActiveBuffs : oponenteActiveBuffs;
+        foreach (Token buffToken in activeBuffs)
+        {
+            if (buffToken.buffType == Token.BuffType.Forca)
+            {
+                total += buffToken.buffPercentage;
+            }
+        }
+        return total;
+    }
+
+    public float GetTotalEnergyBuffPercentage(bool isPlayer)
+    {
+        float total = 0f;
+        List<Token> activeBuffs = isPlayer ? playerActiveBuffs : oponenteActiveBuffs;
+        foreach (Token buffToken in activeBuffs)
+        {
+            if (buffToken.buffType == Token.BuffType.Energia)
+            {
+                total += buffToken.buffPercentage;
+            }
+        }
+        return total;
+    }
+
+    // --- Fim das Novas Adições ---
 
     public void PassarTurno()
     {
@@ -137,6 +222,9 @@ public class TurnManager : MonoBehaviour
     {
         List<Token> atacantes = slotsScript.GetTokensNoTabuleiro(atacantesSaoPlayer);
         List<Token> defensores = slotsScript.GetTokensNoTabuleiro(!atacantesSaoPlayer);
+        
+        // Pega o buff de força atual para o lado atacante
+        float forcaBuffPercent = GetTotalStrengthBuffPercentage(atacantesSaoPlayer);
 
         // Ordenar atacantes: Frente primeiro, depois Esquerda para Direita
         // Isso garante que tokens da frente atacam antes dos de trás na mesma coluna
@@ -148,6 +236,12 @@ public class TurnManager : MonoBehaviour
 
         foreach (Token atacante in atacantes)
         {
+            // Apenas tokens de DANO podem atacar
+            if (atacante.tokenType == Token.TokenType.Buff) {
+                Debug.Log($"Token {atacante.nomeDoToken} é um token de Buff, não ataca.");
+                continue;
+            }
+
             if (!atacante.estaVivo)
             {
                 Debug.Log($"Atacante {atacante.nomeDoToken} não está vivo, pulando ataque.");
@@ -203,17 +297,16 @@ public class TurnManager : MonoBehaviour
                 }
             }
 
-
             // Executa o ataque se um alvo válido e vivo foi encontrado
             if (alvo != null && alvo.estaVivo)
             {
                 if (atacante.habilidadeAtivada)
                 {
-                    atacante.UsarHabilidadeEspecial(alvo);
+                    atacante.UsarHabilidadeEspecial(alvo, forcaBuffPercent); // Passa o buff de força
                 }
                 else
                 {
-                    atacante.Atacar(alvo);
+                    atacante.Atacar(alvo, forcaBuffPercent); // Passa o buff de força
                 }
             }
             else
@@ -236,7 +329,7 @@ public class TurnManager : MonoBehaviour
             acoesDisponiveis.Add(() => TentarJogarCartaOponente());
         }
 
-        // Tenta usar habilidade
+        // Tenta usar habilidade (apenas para tokens de DANO)
         if (Random.Range(0, 100) < chanceOponenteUsarHabilidade)
         {
             acoesDisponiveis.Add(() => TentarUsarHabilidadeOponente());
@@ -263,20 +356,16 @@ public class TurnManager : MonoBehaviour
         bool agiu = false;
         foreach (var acao in acoesDisponiveis)
         {
-            // O Invoke é usado dentro das próprias funções de ação para encadear ou passar o turno
-            // Então aqui, só chamamos a ação. Ela mesma se encarrega de chamar a próxima ação/passar turno
             try {
                 acao.Invoke();
                 agiu = true;
-                break; // Apenas uma ação por Invoke, a próxima ação será encadeada ou o turno passado
+                break; 
             } catch (System.Exception e) {
                 Debug.LogError($"Erro ao tentar executar ação do oponente: {e.Message}");
-                // Continua para a próxima ação se uma falhar (ex: slot nulo)
             }
         }
 
         if (!agiu) {
-            // Se por algum motivo nenhuma ação foi executada (ex: ações disponíveis mas sem mana/slots), passa o turno.
             PassarTurnoAposDelay();
         }
     }
@@ -286,43 +375,51 @@ public class TurnManager : MonoBehaviour
         List<Transform> oponenteHandSlotsComTokens = slotsScript.oponenteHandSlots.Where(s => s.childCount > 0).ToList();
         if (oponenteHandSlotsComTokens.Count > 0)
         {
+            // Ordena pela manaCusto para tentar jogar cartas mais baratas primeiro
             oponenteHandSlotsComTokens = oponenteHandSlotsComTokens.OrderBy(s => s.GetComponentInChildren<Token>().manaCusto).ToList();
+            
+            // Tenta as 3 cartas mais baratas ou todas se tiver menos de 3
             int numToConsider = Mathf.Min(oponenteHandSlotsComTokens.Count, 3);
-            Transform chosenHandSlot = oponenteHandSlotsComTokens[Random.Range(0, numToConsider)];
 
-            Token token = chosenHandSlot.GetComponentInChildren<Token>();
-            if (token != null && manaScript.manaOponente >= token.manaCusto)
+            for (int i = 0; i < numToConsider; i++)
             {
-                Transform slotDeDestino = slotsScript.GetPrimeiroSlotVazioFrente(false);
-                if (slotDeDestino == null)
-                {
-                    slotDeDestino = slotsScript.GetPrimeiroSlotVazioTras(false);
-                }
+                Transform chosenHandSlot = oponenteHandSlotsComTokens[i]; // Tenta a carta mais barata primeiro, depois a próxima
+                Token token = chosenHandSlot.GetComponentInChildren<Token>();
 
-                if (slotDeDestino != null)
+                if (token != null && manaScript.manaOponente >= token.manaCusto)
                 {
-                    if (manaScript.GastarManaOponente(token.manaCusto))
+                    Transform slotDeDestino = slotsScript.GetPrimeiroSlotVazioFrente(false);
+                    if (slotDeDestino == null)
                     {
-                        token.transform.SetParent(slotDeDestino);
-                        token.transform.localPosition = Vector3.zero;
-                        token.PosicaoNoTab = slotsScript.GetPosicaoNoTabuleiro(slotDeDestino, false);
-                        token.GetComponent<SpriteRenderer>().sortingOrder = 1;
-                        AdicionarTokenJogado(token.gameObject);
-                        Debug.Log($"Oponente jogou {token.nomeDoToken} para o tabuleiro.");
-                        Invoke("OponenteFazAcao", Random.Range(minDelayOponenteAcao, maxDelayOponenteAcao)); // Tenta outra ação
-                        return;
+                        slotDeDestino = slotsScript.GetPrimeiroSlotVazioTras(false);
+                    }
+
+                    if (slotDeDestino != null)
+                    {
+                        if (manaScript.GastarManaOponente(token.manaCusto))
+                        {
+                            token.transform.SetParent(slotDeDestino);
+                            token.transform.localPosition = Vector3.zero;
+                            token.PosicaoNoTab = slotsScript.GetPosicaoNoTabuleiro(slotDeDestino, false);
+                            token.GetComponent<SpriteRenderer>().sortingOrder = 1;
+                            AdicionarTokenJogado(token.gameObject);
+                            Debug.Log($"Oponente jogou {token.nomeDoToken} para o tabuleiro.");
+                            Invoke("OponenteFazAcao", Random.Range(minDelayOponenteAcao, maxDelayOponenteAcao)); // Tenta outra ação
+                            return; // Ação bem sucedida, sai da função
+                        }
                     }
                 }
             }
         }
         Debug.Log("Oponente não conseguiu jogar carta. Tentando próxima ação.");
-        Invoke("OponenteFazAcao", Random.Range(minDelayOponenteAcao, maxDelayOponenteAcao)); // Tenta próxima ação
+        Invoke("OponenteFazAcao", Random.Range(minDelayOponenteAcao, maxDelayOponenteAcao)); // Tenta próxima ação se não conseguiu jogar
     }
 
     void TentarUsarHabilidadeOponente()
     {
+        // Filtra apenas tokens de DANO que estão vivos e podem usar habilidade
         List<Token> oponenteTokensNoTab = slotsScript.GetTokensNoTabuleiro(false)
-                                             .Where(t => !t.habilidadeAtivada && manaScript.manaOponente >= t.custoManaEspecial)
+                                             .Where(t => t.tokenType == Token.TokenType.Dano && !t.habilidadeAtivada && manaScript.manaOponente >= t.custoManaEspecial)
                                              .ToList();
         if (oponenteTokensNoTab.Count > 0)
         {
