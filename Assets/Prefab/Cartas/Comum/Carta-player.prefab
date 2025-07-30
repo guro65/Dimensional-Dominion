@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6679528332154061050}
   - component: {fileID: 8821398126025617015}
+  - component: {fileID: 5908374409642620032}
   - component: {fileID: 6011708629460344610}
   - component: {fileID: 962127389986738185}
   m_Layer: 0
@@ -89,6 +90,19 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!114 &5908374409642620032
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6883903205386352422}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 161bb0b1c7631a94287f4c1df33457c2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  snapDistance: 2.92
 --- !u!114 &6011708629460344610
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -107,6 +121,10 @@ MonoBehaviour:
   manaCusto: 0
   raridade: 0
   chanceDeAparicao: 75
+  danoEspecial: 8
+  custoManaEspecial: 5
+  habilidadeAtivada: 0
+  PosicaoNoTab: 0
 --- !u!61 &962127389986738185
 BoxCollider2D:
   m_ObjectHideFlags: 0

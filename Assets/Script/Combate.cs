@@ -1,141 +1,108 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro;
+using TMPro; // Certifique-se de que TMPro está sendo usado para TextMeshProUGUI
 
 public class Combate : MonoBehaviour
 {
     private Mana manaScript;
     private Slots slotsScript;
-    private Caixa caixaScript; // Refer�ncia ao script Caixa
+    private Caixa caixaScript;
+    private TurnManager turnManager;
 
-    [Header("Prefabs de Tokens Dispon�veis")]
+    [Header("Prefabs de Tokens Disponíveis")]
     public List<GameObject> todosOsTokens;
 
-    [Header("Locais Especiais")]
-    public Transform localDuelo;
-    public Transform dueloPlayer;
-    public Transform dueloOponente;
-
     [Header("Canvas UI")]
-    public GameObject painelDeAcoes;
+    public GameObject painelDeAcoes; // Para o botão de habilidade especial
+    public Button botaoHabilidadeEspecial;
     public GameObject painelDeDetalhes;
-    public Button botaoJogar;
-    public Button botaoDetalhes;
-    public Button botaoCancelar;
+    public Button botaoFecharDetalhes; // Agora o único botão no painel de detalhes
 
     public TextMeshProUGUI textoDano;
     public TextMeshProUGUI textoVida;
     public TextMeshProUGUI textoRaridade;
     public TextMeshProUGUI textoNome;
     public TextMeshProUGUI textoManaCusto;
-    public Button botaoFecharDetalhes;
     public Image imagemToken;
 
-    private GameObject tokenSelecionado;
-
-    [Header("Painel de Combate")]
-    public GameObject painelCombate;
-    public Button botaoAtacar;
-    public Button botaoStatus;
-
-    private GameObject tokenPlayerEmDuelo;
-    private GameObject tokenOponenteEmDuelo;
-    private bool tokenPlayerAtacou = false;
-    private float tempoParaCompraOponente = 5f; // Tempo entre as tentativas de compra do oponente
-    private float contadorTempoCompraOponente = 0f;
+    [HideInInspector] public GameObject tokenAtualSelecionado;
 
     void Start()
     {
         manaScript = FindObjectOfType<Mana>();
         slotsScript = FindObjectOfType<Slots>();
-        caixaScript = FindObjectOfType<Caixa>(); // Encontra o script Caixa
+        caixaScript = FindObjectOfType<Caixa>();
+        turnManager = FindObjectOfType<TurnManager>();
 
-        if (slotsScript == null || manaScript == null || caixaScript == null)
+        if (slotsScript == null || manaScript == null || caixaScript == null || turnManager == null)
         {
-            Debug.LogError("Um dos scripts (Slots, Mana ou Caixa) n�o foi encontrado na cena.");
+            Debug.LogError("Um dos scripts essenciais (Slots, Mana, Caixa ou TurnManager) não foi encontrado na cena.");
             enabled = false;
             return;
         }
 
-        GerarTokensIniciais();
-
         painelDeAcoes.SetActive(false);
         painelDeDetalhes.SetActive(false);
-        painelCombate.SetActive(false);
 
-        botaoJogar.onClick.AddListener(JogarToken);
-        botaoDetalhes.onClick.AddListener(MostrarDetalhes);
-        botaoCancelar.onClick.AddListener(CancelarSelecao);
+        // Inicializa 8 tokens para cada lado nas "mãos"
+        GerarTokensIniciais(8);
+
+        // Listener para o botão de habilidade especial
+        botaoHabilidadeEspecial.onClick.AddListener(AtivarHabilidadeEspecial);
+        botaoFecharDetalhes.onClick.AddListener(FecharDetalhes); // Certifica-se de que o listener está no lugar
     }
 
-    void Update()
+    // Chamado pelo TokenDragDrop para selecionar um token (para detalhes ou habilidade)
+    public void SelecionarTokenParaUI(GameObject token)
     {
-        if (tokenPlayerEmDuelo == null)
+        tokenAtualSelecionado = token;
+        Token tokenScript = tokenAtualSelecionado.GetComponent<Token>();
+
+        // Só mostra painéis se o token estiver no tabuleiro
+        if (tokenScript != null && tokenScript.PosicaoNoTab != Token.PosicaoTabuleiro.NaoNoTabuleiro)
         {
-            foreach (GameObject token in GameObject.FindGameObjectsWithTag("Token Player"))
+            MostrarDetalhesUI(); // Isso ativa o painelDeDetalhes
+
+            // Lógica para mostrar o botão de habilidade especial (apenas para o player no seu turno)
+            if (tokenAtualSelecionado.CompareTag("Token Player") && turnManager.turnoAtual == TurnManager.Turno.Player)
             {
-                if (token.transform.position == dueloPlayer.position)
-                    tokenPlayerEmDuelo = token;
+                painelDeAcoes.SetActive(true);
+                // Habilita o botão apenas se tiver mana suficiente e a habilidade não estiver já ativada
+                botaoHabilidadeEspecial.interactable = (manaScript.manaPlayer >= tokenScript.custoManaEspecial && !tokenScript.habilidadeAtivada);
             }
-        }
-
-        if (tokenOponenteEmDuelo == null)
-        {
-            foreach (GameObject token in GameObject.FindGameObjectsWithTag("Token Oponente"))
+            else
             {
-                if (token.transform.position == dueloOponente.position)
-                    tokenOponenteEmDuelo = token;
+                painelDeAcoes.SetActive(false); // Esconde se não for para habilidade (oponente ou turno errado)
             }
-        }
-
-        if (tokenPlayerEmDuelo != null && tokenOponenteEmDuelo != null)
-        {
-            painelCombate.SetActive(true);
-
-            botaoAtacar.onClick.RemoveAllListeners();
-            botaoAtacar.onClick.AddListener(() => AtacarToken());
-
-            botaoStatus.onClick.RemoveAllListeners();
-            botaoStatus.onClick.AddListener(() => MostrarStatusDuelo(tokenOponenteEmDuelo));
         }
         else
         {
-            painelCombate.SetActive(false);
-        }
-
-        // L�gica de compra autom�tica do oponente
-        contadorTempoCompraOponente += Time.deltaTime;
-        if (contadorTempoCompraOponente >= tempoParaCompraOponente)
-        {
-            contadorTempoCompraOponente = 0f;
-            if (caixaScript != null)
-            {
-                caixaScript.OponenteTentarComprarToken();
-            }
+            // Se o token não está no tabuleiro, fecha ambos os painéis
+            painelDeDetalhes.SetActive(false);
+            painelDeAcoes.SetActive(false);
         }
     }
 
-    void GerarTokensIniciais()
+
+    void GerarTokensIniciais(int quantidade)
     {
-        int quantidadeParaCadaLado = Mathf.Min(5, slotsScript.playerSlots.Count); // Garante que n�o gere mais tokens que slots
-        for (int i = 0; i < quantidadeParaCadaLado; i++)
+        for (int i = 0; i < quantidade; i++)
         {
-            GerarEColocarTokenInicial(true);
-            GerarEColocarTokenInicial(false);
+            GerarEColocarTokenNaMao(true); // Para o player
+            GerarEColocarTokenNaMao(false); // Para o oponente
         }
     }
 
-    void GerarEColocarTokenInicial(bool paraPlayer)
+    void GerarEColocarTokenNaMao(bool paraPlayer)
     {
-        List<Transform> slots = paraPlayer ? slotsScript.playerSlots : slotsScript.oponenteSlots;
+        List<Transform> slots = paraPlayer ? slotsScript.playerHandSlots : slotsScript.oponenteHandSlots;
         string tagDoDono = paraPlayer ? "Token Player" : "Token Oponente";
         Transform slotVazio = null;
 
-        // Tenta encontrar um slot vazio
         foreach (Transform slot in slots)
         {
-            if (slot.childCount == 0)
+            if (slotsScript.SlotEstaLivre(slot)) // Usa a nova verificação de slot livre
             {
                 slotVazio = slot;
                 break;
@@ -151,14 +118,20 @@ public class Combate : MonoBehaviour
                 tokenInstanciado.transform.SetParent(slotVazio);
                 tokenInstanciado.transform.localPosition = Vector3.zero;
                 tokenInstanciado.tag = tagDoDono;
-                tokenInstanciado.AddComponent<BoxCollider2D>();
 
                 Token tokenScript = tokenInstanciado.GetComponent<Token>();
                 if (tokenScript != null)
                 {
-                    tokenScript.gameObject.tag = tagDoDono;
+                    tokenScript.gameObject.tag = tagDoDono; // Garante a tag no script
+                }
+                // Adiciona o TokenDragDrop se não tiver (muito importante!)
+                if (tokenInstanciado.GetComponent<TokenDragDrop>() == null)
+                {
+                    tokenInstanciado.AddComponent<TokenDragDrop>();
                 }
             }
+        } else {
+            Debug.LogWarning($"Não há slots vazios na mão do {(paraPlayer ? "Player" : "Oponente")} para gerar token inicial.");
         }
     }
 
@@ -181,267 +154,66 @@ public class Combate : MonoBehaviour
             if (randomValue <= acumulado)
                 return token;
         }
-
-        return null;
+        return null; // Caso não encontre nenhum token (improvável se totalChance > 0)
     }
 
-    public void SelecionarToken(GameObject token)
+    void MostrarDetalhesUI()
     {
-        if (tokenSelecionado != null) return;
-        if (token.CompareTag("Token Oponente")) return;
-        if (tokenPlayerEmDuelo != null) return;
-
-        tokenSelecionado = token;
-        painelDeAcoes.SetActive(true);
-    }
-
-    void JogarToken()
-    {
-        if (tokenSelecionado != null)
+        if (tokenAtualSelecionado != null)
         {
-            Token dados = tokenSelecionado.GetComponent<Token>();
-            int custo = dados.manaCusto;
-            bool podeJogar = false;
-
-            if (tokenSelecionado.CompareTag("Token Player"))
-            {
-                podeJogar = manaScript.GastarManaPlayer(custo);
-                if (podeJogar)
-                {
-                    tokenSelecionado.transform.position = dueloPlayer.position;
-                    tokenSelecionado.transform.SetParent(localDuelo);
-                    tokenPlayerEmDuelo = tokenSelecionado;
-                }
-            }
-
-            if (podeJogar)
-            {
-                painelDeAcoes.SetActive(false);
-                tokenSelecionado = null;
-                Invoke("JogadaDoOponente", 1.0f);
-            }
-            else
-            {
-                Debug.Log("Mana insuficiente para jogar o token.");
-            }
-        }
-    }
-
-    void JogadaDoOponente()
-    {
-        if (tokenOponenteEmDuelo != null) return;
-
-        List<Transform> slotsOponente = slotsScript.oponenteSlots;
-        List<GameObject> tokensDisponiveis = new List<GameObject>();
-
-        foreach (Transform slot in slotsOponente)
-        {
-            if (slot.childCount > 0)
-            {
-                GameObject tokenNoSlot = slot.GetChild(0).gameObject;
-                if (tokenNoSlot.CompareTag("Token Oponente") && tokenNoSlot.transform.position != dueloOponente.position)
-                {
-                    tokensDisponiveis.Add(tokenNoSlot);
-                }
-            }
-        }
-
-        tokensDisponiveis.Sort((a, b) => a.GetComponent<Token>().manaCusto.CompareTo(b.GetComponent<Token>().manaCusto));
-
-        foreach (GameObject token in tokensDisponiveis)
-        {
-            Token dados = token.GetComponent<Token>();
-            bool podeJogar = manaScript.GastarManaOponente(dados.manaCusto);
-            if (podeJogar)
-            {
-                token.transform.position = dueloOponente.position;
-                token.transform.SetParent(localDuelo);
-                tokenOponenteEmDuelo = token;
-                Debug.Log($"Oponente jogou o token: {dados.nomeDoToken} (Custo: {dados.manaCusto})");
-                break;
-            }
-        }
-
-        // Se n�o houver token para jogar, tenta comprar um
-        if (tokenOponenteEmDuelo == null && caixaScript != null && slotsScript.OponenteSlotDisponivel())
-        {
-            caixaScript.OponenteTentarComprarToken();
-        }
-    }
-
-    void MostrarDetalhes()
-    {
-        GameObject tokenParaMostrar = null;
-
-        Collider2D[] colidersDuelo = Physics2D.OverlapCircleAll(dueloPlayer.position, 0.1f);
-        foreach (Collider2D col in colidersDuelo)
-        {
-            if (col != null && col.CompareTag("Token Player"))
-            {
-                tokenParaMostrar = col.gameObject;
-                break;
-            }
-        }
-
-        if (tokenParaMostrar == null && tokenSelecionado != null && tokenSelecionado.CompareTag("Token Player"))
-        {
-            tokenParaMostrar = tokenSelecionado;
-        }
-
-        if (tokenParaMostrar != null)
-        {
-            Token dados = tokenParaMostrar.GetComponent<Token>();
+            Token dados = tokenAtualSelecionado.GetComponent<Token>();
             if (dados != null)
             {
                 textoNome.text = dados.nomeDoToken;
                 textoDano.text = $"Dano: {dados.dano}";
                 textoVida.text = $"Vida: {dados.vida}";
-                textoManaCusto.text = $"Mana: {dados.manaCusto}";
+                textoManaCusto.text = $"Custo: {dados.manaCusto}"; // Agora é o custo para jogar
                 textoRaridade.text = $"Raridade: {dados.raridade}";
 
-                SpriteRenderer spriteRenderer = tokenParaMostrar.GetComponent<SpriteRenderer>();
+                SpriteRenderer spriteRenderer = tokenAtualSelecionado.GetComponent<SpriteRenderer>();
                 if (spriteRenderer != null)
                     imagemToken.sprite = spriteRenderer.sprite;
 
                 painelDeDetalhes.SetActive(true);
-
-                botaoFecharDetalhes.onClick.RemoveAllListeners();
-                botaoFecharDetalhes.onClick.AddListener(FecharDetalhes);
             }
             else
             {
-                Debug.LogError("O token encontrado n�o possui o componente 'Token'.");
+                Debug.LogError("O token selecionado não possui o componente 'Token'.");
                 painelDeDetalhes.SetActive(false);
             }
         }
         else
         {
-            Debug.Log("Nenhum token v�lido do player para mostrar os detalhes.");
             painelDeDetalhes.SetActive(false);
         }
-    }
-
-    void MostrarStatusDuelo(GameObject token)
-    {
-        Token dados = token.GetComponent<Token>();
-
-        textoNome.text = dados.nomeDoToken;
-        textoDano.text = $"Dano: {dados.dano}";
-        textoVida.text = $"Vida: {dados.vida}";
-        textoManaCusto.text = $"Mana: {dados.manaCusto}";
-        textoRaridade.text = $"Raridade: {dados.raridade}";
-
-        SpriteRenderer spriteRenderer = token.GetComponent<SpriteRenderer>();
-        if (spriteRenderer != null)
-            imagemToken.sprite = spriteRenderer.sprite;
-
-        painelDeDetalhes.SetActive(true);
-        botaoFecharDetalhes.onClick.RemoveAllListeners();
-        botaoFecharDetalhes.onClick.AddListener(FecharDetalhes);
     }
 
     public void FecharDetalhes()
     {
         painelDeDetalhes.SetActive(false);
+        painelDeAcoes.SetActive(false); // Fecha o painel de ações junto
+        tokenAtualSelecionado = null;
     }
 
-    void CancelarSelecao()
+    void AtivarHabilidadeEspecial()
     {
-        painelDeAcoes.SetActive(false);
-        painelDeDetalhes.SetActive(false);
-        tokenSelecionado = null;
-    }
-
-    void AtacarToken()
-    {
-        if (tokenPlayerEmDuelo == null || tokenOponenteEmDuelo == null) return;
-
-        Token tPlayer = tokenPlayerEmDuelo.GetComponent<Token>();
-        Token tOponente = tokenOponenteEmDuelo.GetComponent<Token>();
-
-        tOponente.ReceberDano(tPlayer.dano, tPlayer);
-        Debug.Log($"Oponente perdeu {tPlayer.dano} de vida. Vida restante: {tOponente.vida}");
-
-        tokenPlayerAtacou = true;
-
-        if (!tOponente.estaVivo)
+        if (tokenAtualSelecionado != null && tokenAtualSelecionado.CompareTag("Token Player"))
         {
-            string tagVencedor = "Token Player";
-            Token.Raridade raridadeTokenDerrotado = tOponente.raridade;
-            Destroy(tokenOponenteEmDuelo);
-            tokenOponenteEmDuelo = null;
-            tokenPlayerAtacou = false;
-            manaScript.AdicionarManaPorRaridade(raridadeTokenDerrotado, tagVencedor);
-
-            Invoke("TentarNovoTokenOponente", 1.0f);
-            return;
-        }
-
-        Invoke("ContraAtaqueOponente", 1.0f);
-    }
-
-    void ContraAtaqueOponente()
-    {
-        if (tokenPlayerAtacou && tokenPlayerEmDuelo != null && tokenOponenteEmDuelo != null)
-        {
-            Token tPlayer = tokenPlayerEmDuelo.GetComponent<Token>();
-            Token tOponente = tokenOponenteEmDuelo.GetComponent<Token>();
-
-            tPlayer.ReceberDano(tOponente.dano, tOponente);
-            Debug.Log($"Player perdeu {tOponente.dano} de vida. Vida restante: {tPlayer.vida}");
-
-            if (!tPlayer.estaVivo)
+            Token tokenScript = tokenAtualSelecionado.GetComponent<Token>();
+            if (tokenScript != null)
             {
-                string tagVencedor = "Token Oponente";
-                Token.Raridade raridadeTokenDerrotado = tPlayer.raridade;
-                Destroy(tokenPlayerEmDuelo);
-                tokenPlayerEmDuelo = null;
-                manaScript.AdicionarManaPorRaridade(raridadeTokenDerrotado, tagVencedor);
-            }
-
-            tokenPlayerAtacou = false;
-        }
-    }
-
-    void TentarNovoTokenOponente()
-    {
-        if (tokenOponenteEmDuelo != null) return;
-
-        List<Transform> slotsOponente = slotsScript.oponenteSlots;
-        List<GameObject> tokensDisponiveis = new List<GameObject>();
-
-        foreach (Transform slot in slotsOponente)
-        {
-            if (slot.childCount > 0)
-            {
-                GameObject tokenNoSlot = slot.GetChild(0).gameObject;
-                if (tokenNoSlot.CompareTag("Token Oponente") && tokenNoSlot.transform.position != dueloOponente.position)
+                if (manaScript.GastarManaPlayer(tokenScript.custoManaEspecial))
                 {
-                    tokensDisponiveis.Add(tokenNoSlot);
+                    tokenScript.habilidadeAtivada = true; // Apenas marca a flag
+                    Debug.Log($"Habilidade especial de {tokenScript.nomeDoToken} ativada! O dano será aplicado no próximo ataque.");
+                    painelDeAcoes.SetActive(false);
+                    FecharDetalhes();
+                }
+                else
+                {
+                    Debug.Log("Mana insuficiente para usar a habilidade especial.");
                 }
             }
-        }
-
-        tokensDisponiveis.Sort((a, b) => a.GetComponent<Token>().manaCusto.CompareTo(b.GetComponent<Token>().manaCusto));
-
-        foreach (GameObject token in tokensDisponiveis)
-        {
-            Token dados = token.GetComponent<Token>();
-            bool podeJogar = manaScript.GastarManaOponente(dados.manaCusto);
-            if (podeJogar)
-            {
-                token.transform.position = dueloOponente.position;
-                token.transform.SetParent(localDuelo);
-                tokenOponenteEmDuelo = token;
-                Debug.Log($"Oponente jogou outro token: {dados.nomeDoToken} (Custo: {dados.manaCusto})");
-                break;
-            }
-        }
-
-        // Se n�o houver token para jogar, tenta comprar um
-        if (tokenOponenteEmDuelo == null && caixaScript != null && slotsScript.OponenteSlotDisponivel())
-        {
-            caixaScript.OponenteTentarComprarToken();
         }
     }
 }

@@ -16,12 +16,12 @@ public class Caixa : MonoBehaviour
 
         if (combateScript == null || manaScript == null || slotsScript == null)
         {
-            Debug.LogError("Um dos scripts (Combate, Mana ou Slots) n„o foi encontrado na cena.");
+            Debug.LogError("Um dos scripts (Combate, Mana ou Slots) n√£o foi encontrado na cena.");
             enabled = false;
         }
     }
 
-    void OnMouseDown()
+    void OnMouseDown() // Pode ser substitu√≠do por um Button UI ou evento
     {
         if (combateScript != null && manaScript != null && slotsScript != null)
         {
@@ -31,23 +31,27 @@ public class Caixa : MonoBehaviour
 
     public void TentarComprarTokenPlayer()
     {
-        if (manaScript.manaPlayer >= precoCompra && slotsScript.PlayerSlotDisponivel())
+        if (slotsScript.PlayerHandSlotDisponivel())
         {
-            manaScript.GastarManaPlayer(precoCompra);
-            GerarEColocarToken(true);
-            precoCompra *= 2; // Duplica o preÁo apÛs a compra
-        }
-        else if (!slotsScript.PlayerSlotDisponivel())
-        {
-            Debug.Log("N„o h· espaÁo disponÌvel para comprar um novo token.");
+            if (manaScript.manaPlayer >= precoCompra)
+            {
+                manaScript.GastarManaPlayer(precoCompra);
+                GerarEColocarTokenNaMao(true);
+                precoCompra *= 2; // Duplica o pre√ßo ap√≥s a compra
+                Debug.Log($"Player comprou um token. Novo pre√ßo: {precoCompra}");
+            }
+            else
+            {
+                Debug.Log("Mana insuficiente para comprar o token.");
+            }
         }
         else
         {
-            Debug.Log("Mana insuficiente para comprar o token.");
+            Debug.Log("N√£o h√° espa√ßo dispon√≠vel na m√£o do player para comprar um novo token.");
         }
     }
 
-    void GerarEColocarToken(bool paraPlayer)
+    void GerarEColocarTokenNaMao(bool paraPlayer)
     {
         if (combateScript != null)
         {
@@ -55,11 +59,11 @@ public class Caixa : MonoBehaviour
             if (tokenPrefab != null)
             {
                 Transform slotVazio = null;
-                List<Transform> slots = paraPlayer ? slotsScript.playerSlots : slotsScript.oponenteSlots;
+                List<Transform> slots = paraPlayer ? slotsScript.playerHandSlots : slotsScript.oponenteHandSlots;
 
                 foreach (Transform slot in slots)
                 {
-                    if (slot.childCount == 0)
+                    if (slotsScript.SlotEstaLivre(slot)) // Usa a nova verifica√ß√£o de slot livre
                     {
                         slotVazio = slot;
                         break;
@@ -72,18 +76,21 @@ public class Caixa : MonoBehaviour
                     tokenInstanciado.transform.SetParent(slotVazio);
                     tokenInstanciado.transform.localPosition = Vector3.zero;
                     tokenInstanciado.tag = paraPlayer ? "Token Player" : "Token Oponente";
-                    tokenInstanciado.AddComponent<BoxCollider2D>();
 
                     Token tokenScript = tokenInstanciado.GetComponent<Token>();
                     if (tokenScript != null)
                     {
                         tokenScript.gameObject.tag = paraPlayer ? "Token Player" : "Token Oponente";
                     }
+                    // Adiciona o TokenDragDrop (essencial para arrastar da m√£o)
+                    if (tokenInstanciado.GetComponent<TokenDragDrop>() == null)
+                    {
+                        tokenInstanciado.AddComponent<TokenDragDrop>();
+                    }
                 }
                 else
                 {
-                    Debug.Log("N„o h· slots vazios para colocar o novo token.");
-                    // Se n„o houver espaÁo, a mana n„o È gasta e o preÁo n„o aumenta (j· tratado em TentarComprarTokenPlayer)
+                    Debug.LogWarning("N√£o h√° slots vazios na m√£o para colocar o novo token. (verifica√ß√£o pr√©via falhou ou token j√° foi colocado)");
                 }
             }
             else
@@ -93,19 +100,20 @@ public class Caixa : MonoBehaviour
         }
     }
 
-    // FunÁ„o para ser chamada pelo script Combate para o oponente comprar tokens
     public void OponenteTentarComprarToken()
     {
-        if (manaScript.manaOponente >= precoCompra && slotsScript.OponenteSlotDisponivel())
+        if (slotsScript.OponenteHandSlotDisponivel())
         {
-            manaScript.GastarManaOponente(precoCompra);
-            GerarEColocarToken(false);
-            precoCompra *= 2; // Duplica o preÁo para o oponente tambÈm
+            if (manaScript.manaOponente >= precoCompra)
+            {
+                manaScript.GastarManaOponente(precoCompra);
+                GerarEColocarTokenNaMao(false);
+                precoCompra *= 2;
+                Debug.Log($"Oponente comprou um token. Novo pre√ßo: {precoCompra}");
+            }
         }
-        // Oponente n„o faz nada se n„o tiver mana ou slot disponÌvel
     }
 
-    // Reseta o preÁo de compra (pode ser ˙til em algum momento do jogo)
     public void ResetarPrecoCompra()
     {
         precoCompra = 80;
