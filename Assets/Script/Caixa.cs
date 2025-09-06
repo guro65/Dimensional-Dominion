@@ -85,6 +85,12 @@ public class Caixa : MonoBehaviour
                     if (tokenScript != null)
                     {
                         tokenScript.gameObject.tag = paraPlayer ? "Token Player" : "Token Oponente";
+                        // NOVO: Se a carta for Potencial, ela vem selada ao ser gerada
+                        if (tokenScript.raridade == Token.Raridade.Potencial)
+                        {
+                            tokenScript.isSealed = true;
+                            Debug.Log($"Token Potencial {tokenScript.nomeDoToken} gerado selado.");
+                        }
                     }
                     // Adiciona o TokenDragDrop (essencial para arrastar da mão)
                     if (tokenInstanciado.GetComponent<TokenDragDrop>() == null)

@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
-using System.Linq; // Necessário para .OrderBy
+using System.Linq;
 
 public class Slots : MonoBehaviour
 {
@@ -9,19 +9,16 @@ public class Slots : MonoBehaviour
     public List<Transform> oponenteHandSlots;
 
     [Header("Slots do Tabuleiro (Configurados Manualmente)")]
-    // Atribua os slots da frente e de trás separadamente no Inspector
     public List<Transform> playerFrontBoardSlots;
     public List<Transform> playerBackBoardSlots;
     public List<Transform> oponenteFrontBoardSlots;
     public List<Transform> oponenteBackBoardSlots;
 
-    // Estas listas serão preenchidas automaticamente no Awake
     [HideInInspector] public List<Transform> playerBoardSlots;
     [HideInInspector] public List<Transform> oponenteBoardSlots;
 
     void Awake()
     {
-        // Concatena as listas de frente e trás para formar as listas gerais de tabuleiro
         playerBoardSlots = new List<Transform>(playerFrontBoardSlots);
         playerBoardSlots.AddRange(playerBackBoardSlots);
 
@@ -75,7 +72,6 @@ public class Slots : MonoBehaviour
         return tokenNoSlot == null || !tokenNoSlot.estaVivo;
     }
 
-    // Retorna a posição do token no tabuleiro (Frente/Tras) com base no slot
     public Token.PosicaoTabuleiro GetPosicaoNoTabuleiro(Transform slotTransform, bool isPlayer)
     {
         if (isPlayer)
@@ -91,7 +87,6 @@ public class Slots : MonoBehaviour
         return Token.PosicaoTabuleiro.NaoNoTabuleiro;
     }
 
-    // Retorna todos os tokens ativos em slots do tabuleiro para um dado jogador
     public List<Token> GetTokensNoTabuleiro(bool isPlayer)
     {
         List<Token> tokensNoTab = new List<Token>();
@@ -111,7 +106,6 @@ public class Slots : MonoBehaviour
         return tokensNoTab;
     }
 
-    // Retorna todos os slots vazios do tabuleiro para um dado jogador
     public List<Transform> GetSlotsVaziosNoTabuleiro(bool isPlayer)
     {
         List<Transform> vazios = new List<Transform>();
@@ -127,17 +121,15 @@ public class Slots : MonoBehaviour
         return vazios;
     }
 
-    // Retorna o slot da frente correspondente a um slot de trás, ou vice-versa (na mesma coluna X)
     public Transform GetSlotCorrespondenteNaColuna(Transform currentSlot, bool isPlayer, Token.PosicaoTabuleiro targetPosicao)
     {
         List<Transform> boardSlotsToSearch = isPlayer ? playerBoardSlots : oponenteBoardSlots;
 
         foreach (Transform slot in boardSlotsToSearch)
         {
-            // Verifica se o slot pertence à linha de destino E tem aproximadamente a mesma posição X (mesma coluna)
             if (GetPosicaoNoTabuleiro(slot, isPlayer) == targetPosicao)
             {
-                if (Mathf.Abs(slot.position.x - currentSlot.position.x) < 0.1f) // Usa uma pequena margem de erro
+                if (Mathf.Abs(slot.position.x - currentSlot.position.x) < 0.1f)
                 {
                     return slot;
                 }
@@ -146,11 +138,68 @@ public class Slots : MonoBehaviour
         return null;
     }
 
-    // Funções para IA do oponente
+    // Função para encontrar um slot vazio adjacente a um slot específico
+    public Transform FindAdjacentEmptySlot(Transform originalSlot, bool isPlayer)
+    {
+        List<Transform> boardSlots = isPlayer ? playerBoardSlots : oponenteBoardSlots;
+        
+        // Ordena os slots para garantir que a busca por adjacência seja consistente (ex: por X)
+        boardSlots = boardSlots.OrderBy(s => s.position.x).ToList();
+
+        int originalSlotIndex = boardSlots.IndexOf(originalSlot);
+        if (originalSlotIndex == -1) return null; // Slot original não encontrado nas listas do tabuleiro
+
+        // Prioriza slots adjacentes na mesma linha (Frente ou Trás)
+        Token.PosicaoTabuleiro originalPos = GetPosicaoNoTabuleiro(originalSlot, isPlayer);
+        List<Transform> targetRowSlots = originalPos == Token.PosicaoTabuleiro.Frente ? 
+                                         (isPlayer ? playerFrontBoardSlots : oponenteFrontBoardSlots) :
+                                         (isPlayer ? playerBackBoardSlots : oponenteBackBoardSlots);
+        targetRowSlots = targetRowSlots.OrderBy(s => s.position.x).ToList(); // Ordena também
+
+        int originalRowSlotIndex = targetRowSlots.IndexOf(originalSlot);
+        
+        // Tenta encontrar um slot adjacente na mesma linha (esquerda ou direita)
+        if (originalRowSlotIndex != -1)
+        {
+            // Tenta slot à direita
+            if (originalRowSlotIndex + 1 < targetRowSlots.Count)
+            {
+                Transform rightSlot = targetRowSlots[originalRowSlotIndex + 1];
+                if (SlotEstaLivre(rightSlot)) return rightSlot;
+            }
+            // Tenta slot à esquerda
+            if (originalRowSlotIndex - 1 >= 0)
+            {
+                Transform leftSlot = targetRowSlots[originalRowSlotIndex - 1];
+                if (SlotEstaLivre(leftSlot)) return leftSlot;
+            }
+        }
+
+        // Se não encontrou adjacente na mesma linha, tenta qualquer slot vazio restante na mesma linha
+        foreach (Transform slot in targetRowSlots)
+        {
+            if (SlotEstaLivre(slot))
+            {
+                return slot;
+            }
+        }
+
+        // Se a linha original estiver cheia, procura qualquer slot vazio no tabuleiro
+        foreach (Transform slot in boardSlots)
+        {
+            if (SlotEstaLivre(slot))
+            {
+                return slot;
+            }
+        }
+        
+        return null; // Nenhum slot vazio adjacente ou no tabuleiro
+    }
+
     public Transform GetPrimeiroSlotVazioFrente(bool isPlayer)
     {
         List<Transform> slotsFrente = isPlayer ? playerFrontBoardSlots : oponenteFrontBoardSlots;
-        slotsFrente = slotsFrente.OrderBy(s => s.position.x).ToList(); // Ordena por X para achar o mais à esquerda
+        slotsFrente = slotsFrente.OrderBy(s => s.position.x).ToList();
 
         foreach (Transform slot in slotsFrente)
         {
@@ -165,7 +214,7 @@ public class Slots : MonoBehaviour
     public Transform GetPrimeiroSlotVazioTras(bool isPlayer)
     {
         List<Transform> slotsTras = isPlayer ? playerBackBoardSlots : oponenteBackBoardSlots;
-        slotsTras = slotsTras.OrderBy(s => s.position.x).ToList(); // Ordena por X para achar o mais à esquerda
+        slotsTras = slotsTras.OrderBy(s => s.position.x).ToList();
 
         foreach (Transform slot in slotsTras)
         {

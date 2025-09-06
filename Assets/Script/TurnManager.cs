@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro; // Certifique-se de que TMPro está sendo usado
-using System.Linq; // Necessário para .OrderBy
+using TMPro;
+using System.Linq;
 
 public class TurnManager : MonoBehaviour
 {
@@ -19,23 +19,35 @@ public class TurnManager : MonoBehaviour
     public TextMeshProUGUI textoTurno;
 
     [Header("Configurações da IA do Oponente")]
-    [Range(0, 100)] public int chanceOponenteJogarCarta = 70; // Chance % de tentar jogar uma carta
-    [Range(0, 100)] public int chanceOponenteUsarHabilidade = 50; // Chance % de tentar usar habilidade
-    [Range(0, 100)] public int chanceOponenteComprarCarta = 30; // Chance % de tentar comprar carta
+    [Range(0, 100)] public int chanceOponenteJogarCarta = 70;
+    [Range(0, 100)] public int chanceOponenteUsarHabilidade = 50;
+    [Range(0, 100)] public int chanceOponenteComprarCarta = 30;
     public float minDelayOponenteAcao = 0.5f;
     public float maxDelayOponenteAcao = 1.5f;
+
 
     private Slots slotsScript;
     private Mana manaScript;
     private Caixa caixaScript;
-    private Combate combateScript; // Para fechar a UI de detalhes ao passar o turno
+    private Combate combateScript;
 
     private List<GameObject> tokensJogadosNesteTurnoPlayer = new List<GameObject>();
     private List<GameObject> tokensJogadosNesteTurnoOponente = new List<GameObject>();
 
-    // --- Novas Adições para Sistema de Buff ---
-    private List<Token> playerActiveBuffs = new List<Token>();
-    private List<Token> oponenteActiveBuffs = new List<Token>();
+    // --- Sistema de Buffs ---
+    private List<Token> playerActivePassiveBuffTokens = new List<Token>(); // Tokens com TokenType.Buff
+    private List<Token> oponenteActivePassiveBuffTokens = new List<Token>();
+
+    private List<Token.BuffEffect> playerTemporaryBuffs = new List<Token.BuffEffect>(); // Buffs ativos por habilidade (duram 1 turno)
+    private List<Token.BuffEffect> oponenteTemporaryBuffs = new List<Token.BuffEffect>();
+
+    // NOVO: Buffs de cartas Potencial seladas
+    private List<Token> playerSealedBuffTokens = new List<Token>();
+    private List<Token> oponenteSealedBuffTokens = new List<Token>();
+
+    // --- Sistema de Invocação ---
+    // Tuple: (Token que ativou a habilidade, Prefab da carta a ser invocada, É Player?, Slot do ativador)
+    private List<(Token caster, GameObject prefabToSummon, bool isPlayer, Transform originalCasterSlot)> pendingSummons = new List<(Token, GameObject, bool, Transform)>();
 
     void Start()
     {
@@ -63,28 +75,41 @@ public class TurnManager : MonoBehaviour
         Token token = tokenGO.GetComponent<Token>();
         if (token == null) return;
 
-        if (tokenGO.CompareTag("Token Player"))
+        bool isPlayer = tokenGO.CompareTag("Token Player");
+
+        if (isPlayer)
         {
             if (!tokensJogadosNesteTurnoPlayer.Contains(tokenGO))
                 tokensJogadosNesteTurnoPlayer.Add(tokenGO);
             
-            // Adiciona aos buffs ativos se for um token de buff
-            if (token.tokenType == Token.TokenType.Buff && !playerActiveBuffs.Contains(token))
+            // Adiciona aos buffs passivos ativos se for um token de buff passivo
+            if (token.tokenType == Token.TokenType.Buff && !playerActivePassiveBuffTokens.Contains(token))
             {
-                playerActiveBuffs.Add(token);
-                Debug.Log($"Buff {token.buffType} ({token.buffPercentage}%) do Player ativado: {token.nomeDoToken}");
+                playerActivePassiveBuffTokens.Add(token);
+                Debug.Log($"Buff Passivo {token.passiveBuffType} ({token.passiveBuffPercentage}%) do Player ativado: {token.nomeDoToken}");
+            }
+            // NOVO: Adiciona aos buffs selados se for um token Potencial e estiver selado
+            if (token.raridade == Token.Raridade.Potencial && token.isSealed && !playerSealedBuffTokens.Contains(token))
+            {
+                playerSealedBuffTokens.Add(token);
+                Debug.Log($"Token Potencial {token.nomeDoToken} selado do Player ativado: {token.sealedBuffType} ({token.sealedBuffPercentage}%)");
             }
         }
-        else if (tokenGO.CompareTag("Token Oponente"))
+        else // Oponente
         {
             if (!tokensJogadosNesteTurnoOponente.Contains(tokenGO))
                 tokensJogadosNesteTurnoOponente.Add(tokenGO);
 
-            // Adiciona aos buffs ativos se for um token de buff
-            if (token.tokenType == Token.TokenType.Buff && !oponenteActiveBuffs.Contains(token))
+            if (token.tokenType == Token.TokenType.Buff && !oponenteActivePassiveBuffTokens.Contains(token))
             {
-                oponenteActiveBuffs.Add(token);
-                Debug.Log($"Buff {token.buffType} ({token.buffPercentage}%) do Oponente ativado: {token.nomeDoToken}");
+                oponenteActivePassiveBuffTokens.Add(token);
+                Debug.Log($"Buff Passivo {token.passiveBuffType} ({token.passiveBuffPercentage}%) do Oponente ativado: {token.nomeDoToken}");
+            }
+            // NOVO: Adiciona aos buffs selados se for um token Potencial e estiver selado
+            if (token.raridade == Token.Raridade.Potencial && token.isSealed && !oponenteSealedBuffTokens.Contains(token))
+            {
+                oponenteSealedBuffTokens.Add(token);
+                Debug.Log($"Token Potencial {token.nomeDoToken} selado do Oponente ativado: {token.sealedBuffType} ({token.sealedBuffPercentage}%)");
             }
         }
     }
@@ -97,48 +122,88 @@ public class TurnManager : MonoBehaviour
         Token token = tokenGO.GetComponent<Token>();
         if (token != null)
         {
-            // Remove dos buffs ativos se for um token de buff
-            if (tokenGO.CompareTag("Token Player"))
+            bool isPlayer = tokenGO.CompareTag("Token Player");
+            // Remove dos buffs passivos ativos se for um token de buff passivo
+            if (token.tokenType == Token.TokenType.Buff)
             {
-                if (playerActiveBuffs.Remove(token))
+                if (isPlayer && playerActivePassiveBuffTokens.Remove(token))
                 {
-                    Debug.Log($"Buff {token.buffType} ({token.buffPercentage}%) do Player desativado: {token.nomeDoToken}");
+                    Debug.Log($"Buff Passivo {token.passiveBuffType} ({token.passiveBuffPercentage}%) do Player desativado: {token.nomeDoToken}");
+                }
+                else if (!isPlayer && oponenteActivePassiveBuffTokens.Remove(token))
+                {
+                    Debug.Log($"Buff Passivo {token.passiveBuffType} ({token.passiveBuffPercentage}%) do Oponente desativado: {token.nomeDoToken}");
                 }
             }
-            else if (tokenGO.CompareTag("Token Oponente"))
+            // NOVO: Remove dos buffs selados se for um token Potencial
+            if (token.raridade == Token.Raridade.Potencial)
             {
-                if (oponenteActiveBuffs.Remove(token))
+                if (isPlayer && playerSealedBuffTokens.Remove(token))
                 {
-                    Debug.Log($"Buff {token.buffType} ({token.buffPercentage}%) do Oponente desativado: {token.nomeDoToken}");
+                    Debug.Log($"Token Potencial {token.nomeDoToken} selado do Player desativado (derrotado).");
+                }
+                else if (!isPlayer && oponenteSealedBuffTokens.Remove(token))
+                {
+                    Debug.Log($"Token Potencial {token.nomeDoToken} selado do Oponente desativado (derrotado).");
                 }
             }
         }
     }
 
-    // --- Funções para obter o total de buffs ativos ---
+    // NOVO: Remove um token Potencial da lista de buffs selados (quando deselado)
+    public void RemoverTokenPotencialSelado(Token token)
+    {
+        bool isPlayer = token.CompareTag("Token Player");
+        if (isPlayer)
+        {
+            if (playerSealedBuffTokens.Remove(token))
+            {
+                Debug.Log($"Token Potencial {token.nomeDoToken} deselado do Player. Buff removido.");
+            }
+        }
+        else
+        {
+            if (oponenteSealedBuffTokens.Remove(token))
+            {
+                Debug.Log($"Token Potencial {token.nomeDoToken} deselado do Oponente. Buff removido.");
+            }
+        }
+    }
+
+    // --- Funções para obter o total de buffs ativos (Passivos + Temporários + Selados) ---
     public float GetTotalLuckBuffPercentage(bool isPlayer)
     {
         float total = 0f;
-        List<Token> activeBuffs = isPlayer ? playerActiveBuffs : oponenteActiveBuffs;
-        foreach (Token buffToken in activeBuffs)
+        List<Token> activePassiveBuffs = isPlayer ? playerActivePassiveBuffTokens : oponenteActivePassiveBuffTokens;
+        foreach (Token buffToken in activePassiveBuffs)
         {
-            if (buffToken.buffType == Token.BuffType.Sorte)
+            if (buffToken.passiveBuffType == Token.BuffType.Sorte)
             {
-                total += buffToken.buffPercentage;
+                total += buffToken.passiveBuffPercentage;
             }
         }
+        // Buffs de sorte de habilidade ativa não são somados aqui, pois sorte afeta a geração, que ocorre antes do turno de combate.
         return total;
     }
 
     public float GetTotalStrengthBuffPercentage(bool isPlayer)
     {
         float total = 0f;
-        List<Token> activeBuffs = isPlayer ? playerActiveBuffs : oponenteActiveBuffs;
-        foreach (Token buffToken in activeBuffs)
+        List<Token> activePassiveBuffs = isPlayer ? playerActivePassiveBuffTokens : oponenteActivePassiveBuffTokens;
+        foreach (Token buffToken in activePassiveBuffs)
         {
-            if (buffToken.buffType == Token.BuffType.Forca)
+            if (buffToken.passiveBuffType == Token.BuffType.Forca)
             {
-                total += buffToken.buffPercentage;
+                total += buffToken.passiveBuffPercentage;
+            }
+        }
+        // Adiciona buffs temporários (de habilidade ativa)
+        List<Token.BuffEffect> temporaryBuffs = isPlayer ? playerTemporaryBuffs : oponenteTemporaryBuffs;
+        foreach (var buffEffect in temporaryBuffs)
+        {
+            if (buffEffect.buffType == Token.BuffType.Forca)
+            {
+                total += buffEffect.percentage;
             }
         }
         return total;
@@ -147,53 +212,288 @@ public class TurnManager : MonoBehaviour
     public float GetTotalEnergyBuffPercentage(bool isPlayer)
     {
         float total = 0f;
-        List<Token> activeBuffs = isPlayer ? playerActiveBuffs : oponenteActiveBuffs;
-        foreach (Token buffToken in activeBuffs)
+        List<Token> activePassiveBuffs = isPlayer ? playerActivePassiveBuffTokens : oponenteActivePassiveBuffTokens;
+        foreach (Token buffToken in activePassiveBuffs)
         {
-            if (buffToken.buffType == Token.BuffType.Energia)
+            if (buffToken.passiveBuffType == Token.BuffType.Energia)
             {
-                total += buffToken.buffPercentage;
+                total += buffToken.passiveBuffPercentage;
+            }
+        }
+        // Adiciona buffs temporários (de habilidade ativa)
+        List<Token.BuffEffect> temporaryBuffs = isPlayer ? playerTemporaryBuffs : oponenteTemporaryBuffs;
+        foreach (var buffEffect in temporaryBuffs)
+        {
+            if (buffEffect.buffType == Token.BuffType.Energia)
+            {
+                total += buffEffect.percentage;
             }
         }
         return total;
     }
 
-    // --- Fim das Novas Adições ---
+    // NOVO: Buff de Redução de Custo de Habilidade
+    public float GetTotalAbilityCostReductionBuffPercentage(bool isPlayer)
+    {
+        float total = 0f;
+        List<Token> sealedBuffs = isPlayer ? playerSealedBuffTokens : oponenteSealedBuffTokens;
+        foreach (Token token in sealedBuffs)
+        {
+            if (token.isSealed && token.sealedBuffType == Token.BuffType.ReducaoCustoHabilidade)
+            {
+                total += token.sealedBuffPercentage;
+            }
+        }
+        return total;
+    }
+
+    // NOVO: Buff de Aumento de Dano Geral
+    public float GetTotalDamageBuffPercentage(bool isPlayer)
+    {
+        float total = 0f;
+        List<Token> sealedBuffs = isPlayer ? playerSealedBuffTokens : oponenteSealedBuffTokens;
+        foreach (Token token in sealedBuffs)
+        {
+            if (token.isSealed && token.sealedBuffType == Token.BuffType.AumentoDanoGeral)
+            {
+                total += token.sealedBuffPercentage;
+            }
+        }
+        return total;
+    }
+
+    // NOVO: Buff de Aumento de Vida Geral (ainda não usado na lógica de combate, mas disponível)
+    public float GetTotalHealthBuffPercentage(bool isPlayer)
+    {
+        float total = 0f;
+        List<Token> sealedBuffs = isPlayer ? playerSealedBuffTokens : oponenteSealedBuffTokens;
+        foreach (Token token in sealedBuffs)
+        {
+            if (token.isSealed && token.sealedBuffType == Token.BuffType.AumentoVidaGeral)
+            {
+                total += token.sealedBuffPercentage;
+            }
+        }
+        return total;
+    }
+
+    // --- Fim das Funções de Buff ---
 
     public void PassarTurno()
     {
         Debug.Log($"Fim do turno do {turnoAtual}.");
         combateScript.FecharDetalhes(); // Fecha qualquer painel de UI aberto
 
-        ExecutarAcoesDeTurno(); // Executa ataques e habilidades
+        // Fase 1: Executar Habilidades Ativas que afetam o combate (Dano, Buffs)
+        ExecutarHabilidadesAtivasDeCombate();
+
+        // Fase 2: Executar Ataques Normais
+        ExecutarAtaquesDeTurno();
+
+        // Fase 3: Executar Habilidades de Invocação
+        ExecutarHabilidadesDeInvocacao();
+
+        // Fase 4: Limpar buffs temporários e flags de habilidade
+        LimparEstadoDoTurno();
+
         TrocarTurno();
         Debug.Log($"Início do turno do {turnoAtual}.");
     }
 
-    void ExecutarAcoesDeTurno()
+    void ExecutarHabilidadesAtivasDeCombate()
     {
-        if (turnoAtual == Turno.Player)
+        bool isPlayerTurn = (turnoAtual == Turno.Player);
+        List<Token> tokensNoTabuleiro = slotsScript.GetTokensNoTabuleiro(isPlayerTurn);
+
+        foreach (Token token in tokensNoTabuleiro)
         {
-            Debug.Log("Executando ataques do Player.");
-            ExecutarAtaques(true);
-            // Redefine flag de habilidade após o ataque
-            foreach (Token token in slotsScript.GetTokensNoTabuleiro(true))
+            // NOVO: Aplica redução de custo de habilidade
+            float custoReducaoBuff = GetTotalAbilityCostReductionBuffPercentage(isPlayerTurn);
+            int custoHabilidadeReal = Mathf.RoundToInt(token.abilityCost * (1 - (custoReducaoBuff / 100f)));
+            custoHabilidadeReal = Mathf.Max(0, custoHabilidadeReal); // Garante que o custo não seja negativo
+
+            if (token.CompareTag("Token Player") == isPlayerTurn && token.abilityUsedThisTurn)
             {
-                token.habilidadeAtivada = false;
+                if (token.activeAbilityType == Token.ActiveAbilityType.Damage)
+                {
+                    // Lógica para habilidade de Dano (precisa de um alvo)
+                    Token alvo = null;
+                    List<Token> oponentesNoTab = slotsScript.GetTokensNoTabuleiro(!isPlayerTurn);
+                    if (oponentesNoTab.Any())
+                    {
+                        // Exemplo: Ataque o primeiro oponente que encontrar
+                        oponentesNoTab = oponentesNoTab.OrderBy(t => t.PosicaoNoTab == Token.PosicaoTabuleiro.Frente ? 0 : 1).ThenBy(t => Vector3.Distance(token.transform.position, t.transform.position)).ToList();
+                        alvo = oponentesNoTab.FirstOrDefault(t => t.estaVivo);
+                    }
+
+                    if (alvo != null)
+                    {
+                        float forcaBuffPercent = GetTotalStrengthBuffPercentage(isPlayerTurn);
+                        token.AplicarDanoHabilidade(alvo, forcaBuffPercent);
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"Habilidade de dano de {token.nomeDoToken} não encontrou um alvo.");
+                    }
+                }
+                else if (token.activeAbilityType == Token.ActiveAbilityType.Buff)
+                {
+                    // Aplica buffs temporários
+                    List<Token.BuffEffect> targetBuffs = isPlayerTurn ? playerTemporaryBuffs : oponenteTemporaryBuffs;
+                    foreach (var buffEffect in token.abilityBuffEffects)
+                    {
+                        targetBuffs.Add(buffEffect);
+                        Debug.Log($"Buff Temporário {buffEffect.buffType} (+{buffEffect.percentage}%) aplicado por {token.nomeDoToken}");
+                    }
+                }
             }
         }
-        else // Turno do Oponente
+    }
+
+    void ExecutarAtaquesDeTurno()
+    {
+        bool atacantesSaoPlayer = (turnoAtual == Turno.Player);
+        List<Token> atacantes = slotsScript.GetTokensNoTabuleiro(atacantesSaoPlayer);
+        
+        float forcaBuffPercent = GetTotalStrengthBuffPercentage(atacantesSaoPlayer);
+
+        atacantes = atacantes.OrderBy(t => t.PosicaoNoTab == Token.PosicaoTabuleiro.Tras ? 1 : 0)
+                               .ThenBy(t => t.transform.position.x)
+                               .ToList();
+
+        Debug.Log($"Total de atacantes {(atacantesSaoPlayer ? "Player" : "Oponente")}: {atacantes.Count}");
+
+        foreach (Token atacante in atacantes)
         {
-            Debug.Log("Executando ataques do Oponente.");
-            ExecutarAtaques(false);
-            foreach (Token token in slotsScript.GetTokensNoTabuleiro(false))
+            if (atacante.tokenType == Token.TokenType.Buff) { // Tokens de Buff Passivo não atacam
+                continue;
+            }
+            // NOVO: Tokens Potencial selados não atacam
+            if (atacante.raridade == Token.Raridade.Potencial && atacante.isSealed)
             {
-                token.habilidadeAtivada = false;
+                Debug.Log($"Token Potencial {atacante.nomeDoToken} está selado, pulando ataque.");
+                continue;
+            }
+
+            if (!atacante.estaVivo)
+            {
+                Debug.Log($"Atacante {atacante.nomeDoToken} não está vivo, pulando ataque.");
+                continue;
+            }
+
+            Token alvo = null;
+            Transform slotAtacante = atacante.transform.parent;
+            if (slotAtacante == null) {
+                 Debug.LogWarning($"Atacante {atacante.nomeDoToken} não tem pai (slot). Ignorando ataque.");
+                 continue;
+            }
+
+            // Lógica de alvo (primeiro na frente, depois atrás na mesma coluna)
+            Transform slotAlvoFrente = slotsScript.GetSlotCorrespondenteNaColuna(slotAtacante, !atacantesSaoPlayer, Token.PosicaoTabuleiro.Frente);
+            if (slotAlvoFrente != null && slotAlvoFrente.childCount > 0)
+            {
+                Token tokenNaFrente = slotAlvoFrente.GetComponentInChildren<Token>();
+                if (tokenNaFrente != null && tokenNaFrente.estaVivo)
+                {
+                    alvo = tokenNaFrente;
+                }
+            }
+
+            if (alvo == null)
+            {
+                bool frenteBloqueada = false;
+                if (slotAlvoFrente != null && slotAlvoFrente.childCount > 0)
+                {
+                    Token tokenNaFrenteCheck = slotAlvoFrente.GetComponentInChildren<Token>();
+                    if (tokenNaFrenteCheck != null && tokenNaFrenteCheck.estaVivo)
+                    {
+                        frenteBloqueada = true;
+                    }
+                }
+
+                if (!frenteBloqueada)
+                {
+                    Transform slotAlvoTras = slotsScript.GetSlotCorrespondenteNaColuna(slotAtacante, !atacantesSaoPlayer, Token.PosicaoTabuleiro.Tras);
+                    if (slotAlvoTras != null && slotAlvoTras.childCount > 0)
+                    {
+                        Token tokenNaTras = slotAlvoTras.GetComponentInChildren<Token>();
+                        if (tokenNaTras != null && tokenNaTras.estaVivo)
+                        {
+                            alvo = tokenNaTras;
+                        }
+                    }
+                }
+            }
+            
+            if (alvo != null && alvo.estaVivo)
+            {
+                atacante.Atacar(alvo, forcaBuffPercent); // Passa o buff de força
+            }
+            else
+            {
+                Debug.Log($"{atacante.nomeDoToken} não encontrou um alvo válido ou vivo para atacar neste turno.");
             }
         }
-        // Limpa a lista de tokens jogados APÓS os ataques, para garantir que todos que foram jogados ataquem neste turno.
+    }
+
+    void ExecutarHabilidadesDeInvocacao()
+    {
+        foreach (var summonRequest in pendingSummons.ToList()) // ToList() para permitir modificação da lista original
+        {
+            Transform spawnSlot = slotsScript.FindAdjacentEmptySlot(summonRequest.originalCasterSlot, summonRequest.isPlayer);
+            if (spawnSlot != null)
+            {
+                GameObject newCard = Instantiate(summonRequest.prefabToSummon, spawnSlot.position, Quaternion.identity);
+                newCard.transform.SetParent(spawnSlot);
+                newCard.transform.localPosition = Vector3.zero;
+                newCard.tag = summonRequest.isPlayer ? "Token Player" : "Token Oponente";
+
+                Token newTokenScript = newCard.GetComponent<Token>();
+                if (newTokenScript != null)
+                {
+                    newTokenScript.gameObject.tag = newCard.tag;
+                    newTokenScript.PosicaoNoTab = slotsScript.GetPosicaoNoTabuleiro(spawnSlot, summonRequest.isPlayer);
+                    // NOVO: Se a carta invocada for Potencial, ela vem selada
+                    if (newTokenScript.raridade == Token.Raridade.Potencial)
+                    {
+                        newTokenScript.isSealed = true;
+                        Debug.Log($"Token Potencial {newTokenScript.nomeDoToken} invocado selado.");
+                    }
+                }
+                if (newCard.GetComponent<TokenDragDrop>() == null)
+                {
+                    newCard.AddComponent<TokenDragDrop>();
+                }
+                Debug.Log($"Carta {newCard.name} invocada por {summonRequest.caster.name} no slot {spawnSlot.name}.");
+            }
+            else
+            {
+                Debug.LogWarning($"Não foi possível invocar carta para {summonRequest.caster.name}. Nenhum slot vazio disponível adjacente.");
+            }
+            // Remove a requisição após tentar invocar
+            pendingSummons.Remove(summonRequest);
+        }
+    }
+
+    void LimparEstadoDoTurno()
+    {
+        // Limpa a lista de tokens jogados
         tokensJogadosNesteTurnoPlayer.Clear();
         tokensJogadosNesteTurnoOponente.Clear();
+
+        // Limpa buffs temporários
+        playerTemporaryBuffs.Clear();
+        oponenteTemporaryBuffs.Clear();
+
+        // Reseta a flag de habilidade usada para todos os tokens
+        foreach (Token token in slotsScript.GetTokensNoTabuleiro(true))
+        {
+            token.abilityUsedThisTurn = false;
+        }
+        foreach (Token token in slotsScript.GetTokensNoTabuleiro(false))
+        {
+            token.abilityUsedThisTurn = false;
+        }
     }
 
     void TrocarTurno()
@@ -203,7 +503,7 @@ public class TurnManager : MonoBehaviour
             turnoAtual = Turno.Oponente;
             if (botaoPassarTurno != null) botaoPassarTurno.interactable = false;
             float delay = Random.Range(minDelayOponenteAcao, maxDelayOponenteAcao);
-            Invoke("OponenteFazAcao", delay); // Oponente faz sua primeira ação após um delay
+            Invoke("OponenteFazAcao", delay);
         }
         else
         {
@@ -218,101 +518,38 @@ public class TurnManager : MonoBehaviour
         if (textoTurno != null) textoTurno.text = $"Turno: {turnoAtual}";
     }
 
-    void ExecutarAtaques(bool atacantesSaoPlayer)
+    // --- Nova função para que Combate.cs possa registrar a habilidade ---
+    public void HandleActiveAbility(Token tokenScript, Transform casterSlot)
     {
-        List<Token> atacantes = slotsScript.GetTokensNoTabuleiro(atacantesSaoPlayer);
-        List<Token> defensores = slotsScript.GetTokensNoTabuleiro(!atacantesSaoPlayer);
+        bool isPlayer = tokenScript.CompareTag("Token Player");
         
-        // Pega o buff de força atual para o lado atacante
-        float forcaBuffPercent = GetTotalStrengthBuffPercentage(atacantesSaoPlayer);
-
-        // Ordenar atacantes: Frente primeiro, depois Esquerda para Direita
-        // Isso garante que tokens da frente atacam antes dos de trás na mesma coluna
-        atacantes = atacantes.OrderBy(t => t.PosicaoNoTab == Token.PosicaoTabuleiro.Tras ? 1 : 0) // Frente = 0, Trás = 1
-                               .ThenBy(t => t.transform.position.x)
-                               .ToList();
-
-        Debug.Log($"Total de atacantes {(atacantesSaoPlayer ? "Player" : "Oponente")}: {atacantes.Count}");
-
-        foreach (Token atacante in atacantes)
+        switch (tokenScript.activeAbilityType)
         {
-            // Apenas tokens de DANO podem atacar
-            if (atacante.tokenType == Token.TokenType.Buff) {
-                Debug.Log($"Token {atacante.nomeDoToken} é um token de Buff, não ataca.");
-                continue;
-            }
-
-            if (!atacante.estaVivo)
-            {
-                Debug.Log($"Atacante {atacante.nomeDoToken} não está vivo, pulando ataque.");
-                continue; // Pula se o atacante morreu no meio dos ataques (ex: contra-ataque)
-            }
-
-            Token alvo = null;
-            Transform slotAtacante = atacante.transform.parent;
-            if (slotAtacante == null) {
-                 Debug.LogWarning($"Atacante {atacante.nomeDoToken} não tem pai (slot). Ignorando ataque.");
-                 continue;
-            }
-
-            // Tentar encontrar alvo na frente na mesma coluna
-            Transform slotAlvoFrente = slotsScript.GetSlotCorrespondenteNaColuna(slotAtacante, !atacantesSaoPlayer, Token.PosicaoTabuleiro.Frente);
-            
-            if (slotAlvoFrente != null && slotAlvoFrente.childCount > 0)
-            {
-                Token tokenNaFrente = slotAlvoFrente.GetComponentInChildren<Token>();
-                if (tokenNaFrente != null && tokenNaFrente.estaVivo)
+            case Token.ActiveAbilityType.Damage:
+                // Dano direto será aplicado na fase de habilidades de combate
+                break;
+            case Token.ActiveAbilityType.Buff:
+                // Buffs temporários serão aplicados na fase de habilidades de combate
+                break;
+            case Token.ActiveAbilityType.Summon:
+                // Invocações são agendadas para a fase pós-combate
+                for (int i = 0; i < tokenScript.numCardsToSummon; i++)
                 {
-                    alvo = tokenNaFrente;
-                    Debug.Log($"Alvo direto na frente para {atacante.nomeDoToken}: {alvo.nomeDoToken}");
-                }
-            }
-
-            // Se não encontrou alvo na frente ou o alvo da frente está morto, tenta encontrar atrás na mesma coluna
-            if (alvo == null)
-            {
-                // Verifica explicitamente se a posição da frente na coluna do atacante está realmente livre ou morta
-                bool frenteBloqueada = false;
-                if (slotAlvoFrente != null && slotAlvoFrente.childCount > 0)
-                {
-                    Token tokenNaFrenteCheck = slotAlvoFrente.GetComponentInChildren<Token>();
-                    if (tokenNaFrenteCheck != null && tokenNaFrenteCheck.estaVivo)
+                    if (tokenScript.summonableCards.Any())
                     {
-                        frenteBloqueada = true;
+                        GameObject cardToSummon = tokenScript.summonableCards[Random.Range(0, tokenScript.summonableCards.Count)];
+                        pendingSummons.Add((tokenScript, cardToSummon, isPlayer, casterSlot));
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"Carta de invocação {tokenScript.name} não tem cartas para invocar na lista 'Summonable Cards'.");
                     }
                 }
-
-                if (!frenteBloqueada) // Se a frente não está bloqueada, pode atacar o de trás
-                {
-                    Transform slotAlvoTras = slotsScript.GetSlotCorrespondenteNaColuna(slotAtacante, !atacantesSaoPlayer, Token.PosicaoTabuleiro.Tras);
-                    if (slotAlvoTras != null && slotAlvoTras.childCount > 0)
-                    {
-                        Token tokenNaTras = slotAlvoTras.GetComponentInChildren<Token>();
-                        if (tokenNaTras != null && tokenNaTras.estaVivo)
-                        {
-                            alvo = tokenNaTras;
-                            Debug.Log($"Alvo encontrado atrás para {atacante.nomeDoToken} (frente livre): {alvo.nomeDoToken}");
-                        }
-                    }
-                }
-            }
-
-            // Executa o ataque se um alvo válido e vivo foi encontrado
-            if (alvo != null && alvo.estaVivo)
-            {
-                if (atacante.habilidadeAtivada)
-                {
-                    atacante.UsarHabilidadeEspecial(alvo, forcaBuffPercent); // Passa o buff de força
-                }
-                else
-                {
-                    atacante.Atacar(alvo, forcaBuffPercent); // Passa o buff de força
-                }
-            }
-            else
-            {
-                Debug.Log($"{atacante.nomeDoToken} não encontrou um alvo válido ou vivo para atacar neste turno.");
-            }
+                break;
+            case Token.ActiveAbilityType.None:
+            default:
+                Debug.LogWarning($"Token {tokenScript.name} com habilidade ativa tipo 'None' ou desconhecido tentando ser ativada.");
+                break;
         }
     }
 
@@ -329,7 +566,7 @@ public class TurnManager : MonoBehaviour
             acoesDisponiveis.Add(() => TentarJogarCartaOponente());
         }
 
-        // Tenta usar habilidade (apenas para tokens de DANO)
+        // Tenta usar habilidade (apenas para tokens de DANO com habilidade não usada)
         if (Random.Range(0, 100) < chanceOponenteUsarHabilidade)
         {
             acoesDisponiveis.Add(() => TentarUsarHabilidadeOponente());
@@ -341,18 +578,25 @@ public class TurnManager : MonoBehaviour
             acoesDisponiveis.Add(() => TentarComprarCartaOponente());
         }
 
-        // Se nenhuma ação foi adicionada, adiciona a ação de passar o turno como fallback
+        // NOVO: Tenta deselar carta (se houver alguma selada e com mana divina suficiente)
+        List<Token> oponenteSealedTokens = slotsScript.GetTokensNoTabuleiro(false)
+                                                .Where(t => t.raridade == Token.Raridade.Potencial && t.isSealed && manaScript.manaDivinaOponente >= t.divineManaCost)
+                                                .ToList();
+        if (oponenteSealedTokens.Any())
+        {
+            acoesDisponiveis.Add(() => TentarDeselarCartaOponente(oponenteSealedTokens));
+        }
+
+
         if (acoesDisponiveis.Count == 0)
         {
             acoesDisponiveis.Add(() => PassarTurnoAposDelay());
         }
         else
         {
-            // Embaralha as ações para aleatoriedade
             acoesDisponiveis = acoesDisponiveis.OrderBy(x => Random.value).ToList();
         }
 
-        // Executa a primeira ação disponível e válida
         bool agiu = false;
         foreach (var acao in acoesDisponiveis)
         {
@@ -375,15 +619,12 @@ public class TurnManager : MonoBehaviour
         List<Transform> oponenteHandSlotsComTokens = slotsScript.oponenteHandSlots.Where(s => s.childCount > 0).ToList();
         if (oponenteHandSlotsComTokens.Count > 0)
         {
-            // Ordena pela manaCusto para tentar jogar cartas mais baratas primeiro
             oponenteHandSlotsComTokens = oponenteHandSlotsComTokens.OrderBy(s => s.GetComponentInChildren<Token>().manaCusto).ToList();
-            
-            // Tenta as 3 cartas mais baratas ou todas se tiver menos de 3
             int numToConsider = Mathf.Min(oponenteHandSlotsComTokens.Count, 3);
 
             for (int i = 0; i < numToConsider; i++)
             {
-                Transform chosenHandSlot = oponenteHandSlotsComTokens[i]; // Tenta a carta mais barata primeiro, depois a próxima
+                Transform chosenHandSlot = oponenteHandSlotsComTokens[i];
                 Token token = chosenHandSlot.GetComponentInChildren<Token>();
 
                 if (token != null && manaScript.manaOponente >= token.manaCusto)
@@ -402,37 +643,54 @@ public class TurnManager : MonoBehaviour
                             token.transform.localPosition = Vector3.zero;
                             token.PosicaoNoTab = slotsScript.GetPosicaoNoTabuleiro(slotDeDestino, false);
                             token.GetComponent<SpriteRenderer>().sortingOrder = 1;
+                            // NOVO: Se a carta for Potencial, ela vem selada ao ser jogada
+                            if (token.raridade == Token.Raridade.Potencial)
+                            {
+                                token.isSealed = true;
+                                Debug.Log($"Oponente jogou Token Potencial {token.nomeDoToken} selado para o tabuleiro.");
+                            }
                             AdicionarTokenJogado(token.gameObject);
                             Debug.Log($"Oponente jogou {token.nomeDoToken} para o tabuleiro.");
-                            Invoke("OponenteFazAcao", Random.Range(minDelayOponenteAcao, maxDelayOponenteAcao)); // Tenta outra ação
-                            return; // Ação bem sucedida, sai da função
+                            Invoke("OponenteFazAcao", Random.Range(minDelayOponenteAcao, maxDelayOponenteAcao));
+                            return;
                         }
                     }
                 }
             }
         }
         Debug.Log("Oponente não conseguiu jogar carta. Tentando próxima ação.");
-        Invoke("OponenteFazAcao", Random.Range(minDelayOponenteAcao, maxDelayOponenteAcao)); // Tenta próxima ação se não conseguiu jogar
+        Invoke("OponenteFazAcao", Random.Range(minDelayOponenteAcao, maxDelayOponenteAcao));
     }
 
     void TentarUsarHabilidadeOponente()
     {
-        // Filtra apenas tokens de DANO que estão vivos e podem usar habilidade
+        // NOVO: Aplica redução de custo de habilidade para oponente
+        float custoReducaoBuff = GetTotalAbilityCostReductionBuffPercentage(false);
+
+        // Filtra apenas tokens de DANO que estão vivos, não usaram habilidade e têm mana
         List<Token> oponenteTokensNoTab = slotsScript.GetTokensNoTabuleiro(false)
-                                             .Where(t => t.tokenType == Token.TokenType.Dano && !t.habilidadeAtivada && manaScript.manaOponente >= t.custoManaEspecial)
+                                             .Where(t => t.tokenType == Token.TokenType.Dano && t.activeAbilityType != Token.ActiveAbilityType.None && !t.abilityUsedThisTurn)
                                              .ToList();
-        if (oponenteTokensNoTab.Count > 0)
+        if (oponenteTokensNoTab.Any())
         {
             Token tokenParaHabilidade = oponenteTokensNoTab[Random.Range(0, oponenteTokensNoTab.Count)];
             
-            tokenParaHabilidade.habilidadeAtivada = true;
-            manaScript.GastarManaOponente(tokenParaHabilidade.custoManaEspecial);
-            Debug.Log($"Oponente ativou habilidade especial de {tokenParaHabilidade.nomeDoToken}.");
-            Invoke("OponenteFazAcao", Random.Range(minDelayOponenteAcao, maxDelayOponenteAcao)); // Tenta outra ação
-            return;
+            int custoHabilidadeReal = Mathf.RoundToInt(tokenParaHabilidade.abilityCost * (1 - (custoReducaoBuff / 100f)));
+            custoHabilidadeReal = Mathf.Max(0, custoHabilidadeReal);
+
+            // Simula a ativação da habilidade para o AI
+            if (manaScript.GastarManaOponente(custoHabilidadeReal))
+            {
+                tokenParaHabilidade.abilityUsedThisTurn = true;
+                Debug.Log($"Oponente ativou habilidade especial de {tokenParaHabilidade.nomeDoToken} (Custo: {custoHabilidadeReal}).");
+                HandleActiveAbility(tokenParaHabilidade, tokenParaHabilidade.transform.parent); // Informa ao TurnManager
+
+                Invoke("OponenteFazAcao", Random.Range(minDelayOponenteAcao, maxDelayOponenteAcao));
+                return;
+            }
         }
         Debug.Log("Oponente não conseguiu usar habilidade. Tentando próxima ação.");
-        Invoke("OponenteFazAcao", Random.Range(minDelayOponenteAcao, maxDelayOponenteAcao)); // Tenta próxima ação
+        Invoke("OponenteFazAcao", Random.Range(minDelayOponenteAcao, maxDelayOponenteAcao));
     }
 
     void TentarComprarCartaOponente()
@@ -440,11 +698,30 @@ public class TurnManager : MonoBehaviour
         if (slotsScript.OponenteHandSlotDisponivel() && manaScript.manaOponente >= caixaScript.precoCompra)
         {
             caixaScript.OponenteTentarComprarToken();
-            Invoke("OponenteFazAcao", Random.Range(minDelayOponenteAcao, maxDelayOponenteAcao)); // Tenta outra ação
+            Invoke("OponenteFazAcao", Random.Range(minDelayOponenteAcao, maxDelayOponenteAcao));
             return;
         }
         Debug.Log("Oponente não conseguiu comprar carta. Passando turno.");
-        PassarTurnoAposDelay(); // Passa o turno se não pode mais fazer nada
+        PassarTurnoAposDelay();
+    }
+
+    // NOVO: Tentar deselar carta para oponente
+    void TentarDeselarCartaOponente(List<Token> oponenteSealedTokens)
+    {
+        if (oponenteSealedTokens.Any())
+        {
+            Token tokenParaDeselar = oponenteSealedTokens[Random.Range(0, oponenteSealedTokens.Count)];
+            if (manaScript.GastarManaDivina(tokenParaDeselar.divineManaCost, false))
+            {
+                tokenParaDeselar.Deselar();
+                RemoverTokenPotencialSelado(tokenParaDeselar); // Remove da lista de buffs selados
+                Debug.Log($"Oponente deselou {tokenParaDeselar.nomeDoToken} por {tokenParaDeselar.divineManaCost} Mana Divina.");
+                Invoke("OponenteFazAcao", Random.Range(minDelayOponenteAcao, maxDelayOponenteAcao));
+                return;
+            }
+        }
+        Debug.Log("Oponente não conseguiu deselar carta. Tentando próxima ação.");
+        Invoke("OponenteFazAcao", Random.Range(minDelayOponenteAcao, maxDelayOponenteAcao));
     }
 
     void PassarTurnoAposDelay()

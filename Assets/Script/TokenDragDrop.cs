@@ -1,5 +1,5 @@
 using UnityEngine;
-using UnityEngine.EventSystems; // Necessário para detecção de UI
+using UnityEngine.EventSystems;
 
 public class TokenDragDrop : MonoBehaviour
 {
@@ -14,9 +14,9 @@ public class TokenDragDrop : MonoBehaviour
     private SpriteRenderer spriteRenderer;
     private TurnManager turnManager;
 
-    public float snapDistance = 0.5f; // Distância para o token "grudar" no slot
-    private Transform currentHoveredSlot = null; // Slot que está sendo sobrevoado
-    private bool isDefeated = false; // Flag para impedir drag/drop após a derrota
+    public float snapDistance = 0.5f;
+    private Transform currentHoveredSlot = null;
+    private bool isDefeated = false;
 
     void Start()
     {
@@ -34,7 +34,6 @@ public class TokenDragDrop : MonoBehaviour
             return;
         }
         
-        // Garante que a ordem de renderização inicial é 1
         spriteRenderer.sortingOrder = 1;
 
         originalParent = transform.parent;
@@ -44,7 +43,6 @@ public class TokenDragDrop : MonoBehaviour
     public void SetDefeated()
     {
         isDefeated = true;
-        // Opcional: desativar o collider para não interagir mais
         if (GetComponent<BoxCollider2D>() != null)
         {
             GetComponent<BoxCollider2D>().enabled = false;
@@ -54,36 +52,32 @@ public class TokenDragDrop : MonoBehaviour
     void OnMouseDown()
     {
         if (isDefeated) return;
-        if (CompareTag("Token Oponente") || turnManager.turnoAtual != TurnManager.Turno.Player) return; // Só player pode arrastar ou selecionar no seu turno
+        if (CompareTag("Token Oponente") || turnManager.turnoAtual != TurnManager.Turno.Player) return;
 
-        // Se o token está no tabuleiro, não inicia o drag no OnMouseDown, apenas prepara para uma possível seleção
         if (tokenScript.PosicaoNoTab != Token.PosicaoTabuleiro.NaoNoTabuleiro)
         {
-            // Não inicia isDragging aqui se for para seleção. O OnMouseUp tratará o clique.
             return;
         }
 
-        // Se o token está na mão, inicia o drag
         isDragging = true;
         offset = transform.position - Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        originalParent = transform.parent; // Salva o pai original (slot da mão)
-        originalPosition = transform.localPosition; // Salva a posição relativa ao pai
+        originalParent = transform.parent;
+        originalPosition = transform.localPosition;
 
-        // Tira o token do seu pai temporariamente para arrastar livremente
         transform.SetParent(null);
-        spriteRenderer.sortingOrder = 10; // Coloca o token arrastando na frente de outros
-        combateScript.FecharDetalhes(); // Fecha qualquer UI aberta ao iniciar o drag
+        spriteRenderer.sortingOrder = 10;
+        combateScript.FecharDetalhes();
     }
 
     void OnMouseDrag()
     {
-        if (!isDragging) return; // Só permite drag se isDragging foi setado em OnMouseDown (ou seja, veio da mão)
+        if (!isDragging) return;
 
         Vector3 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         transform.position = new Vector3(mousePosition.x + offset.x, mousePosition.y + offset.y, transform.position.z);
 
         currentHoveredSlot = null;
-        foreach (Transform slot in slotsScript.playerBoardSlots) // Usa a lista geral de slots do tabuleiro
+        foreach (Transform slot in slotsScript.playerBoardSlots)
         {
             if (slotsScript.SlotEstaLivre(slot))
             {
@@ -100,22 +94,20 @@ public class TokenDragDrop : MonoBehaviour
     {
         if (isDefeated) return;
 
-        if (isDragging) // Se estava arrastando (veio da mão)
+        if (isDragging)
         {
             isDragging = false;
-            spriteRenderer.sortingOrder = 1; // Volta a ordem de renderização normal (1)
+            spriteRenderer.sortingOrder = 1;
 
             if (currentHoveredSlot != null && CompareTag("Token Player"))
             {
-                // Tenta jogar a carta no slot
                 if (manaScript.GastarManaPlayer(tokenScript.manaCusto))
                 {
                     transform.SetParent(currentHoveredSlot);
                     transform.localPosition = Vector3.zero;
-                    // Atualiza a posição do token no script Token com base no slot
                     tokenScript.PosicaoNoTab = slotsScript.GetPosicaoNoTabuleiro(currentHoveredSlot, true); 
                     Debug.Log($"Token {tokenScript.nomeDoToken} jogado para o tabuleiro na posição: {tokenScript.PosicaoNoTab}");
-                    turnManager.AdicionarTokenJogado(gameObject); // Avisa o TurnManager que um token foi jogado
+                    turnManager.AdicionarTokenJogado(gameObject);
                 }
                 else
                 {
@@ -128,20 +120,17 @@ public class TokenDragDrop : MonoBehaviour
                 RetornarParaMao();
             }
         }
-        else // Se não estava arrastando, significa que foi um clique simples
+        else
         {
-            // Abre o painel de detalhes SOMENTE se o token estiver no tabuleiro
             if (tokenScript.PosicaoNoTab != Token.PosicaoTabuleiro.NaoNoTabuleiro)
             {
                 combateScript.SelecionarTokenParaUI(gameObject);
             } else {
-                // Se o token está na mão e não houve drag, não faz nada
                 Debug.Log($"Clicou em {tokenScript.nomeDoToken} na mão. Nenhuma ação de UI para tokens na mão.");
             }
         }
 
-        currentHoveredSlot = null; // Reseta o slot sobrevoado
-        // combateScript.FecharDetalhes(); // Pode ser fechado por SelecionarTokenParaUI ou se retornar para mão
+        currentHoveredSlot = null;
     }
 
     void RetornarParaMao()
@@ -150,15 +139,14 @@ public class TokenDragDrop : MonoBehaviour
         {
             transform.SetParent(originalParent);
             transform.localPosition = originalPosition;
-            tokenScript.PosicaoNoTab = Token.PosicaoTabuleiro.NaoNoTabuleiro; // Garante que não está no tabuleiro
-            spriteRenderer.sortingOrder = 1; // Garante ordem 1 ao retornar para a mão
+            tokenScript.PosicaoNoTab = Token.PosicaoTabuleiro.NaoNoTabuleiro;
+            spriteRenderer.sortingOrder = 1;
             Debug.Log("Token retornou para a mão.");
         }
         else
         {
-            // Se originalParent é nulo (pode acontecer se o token foi gerado sem um pai, ou por algum erro)
             Debug.LogError("Original parent is null, token cannot return to hand. Destroying token.");
-            Destroy(gameObject); // Ou outra lógica de tratamento de erro
+            Destroy(gameObject);
         }
     }
 }

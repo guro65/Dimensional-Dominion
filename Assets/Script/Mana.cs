@@ -6,14 +6,26 @@ public class Mana : MonoBehaviour
     [Header("Mana Inicial")]
     public int manaPlayerInicial = 100;
     public int manaOponenteInicial = 100;
+    // NOVO: Mana Divina Inicial
+    public int manaDivinaPlayerInicial = 0;
+    public int manaDivinaOponenteInicial = 0;
+
 
     [Header("Mana Atual")]
     public int manaPlayer;
     public int manaOponente;
+    // NOVO: Mana Divina Atual
+    public int manaDivinaPlayer;
+    public int manaDivinaOponente;
+
 
     [Header("UI de Mana")]
     public TextMeshProUGUI textoManaPlayer;
     public TextMeshProUGUI textoManaOponente;
+    // NOVO: UI de Mana Divina
+    public TextMeshProUGUI textoManaDivinaPlayer;
+    public TextMeshProUGUI textoManaDivinaOponente;
+
 
     [Header("Configuração de Mana por Raridade")]
     public ManaPorRaridade[] manaPorRaridade;
@@ -30,6 +42,9 @@ public class Mana : MonoBehaviour
     {
         manaPlayer = manaPlayerInicial;
         manaOponente = manaOponenteInicial;
+        // NOVO: Inicializa Mana Divina
+        manaDivinaPlayer = manaDivinaPlayerInicial;
+        manaDivinaOponente = manaDivinaOponenteInicial;
         AtualizarManaUI();
     }
 
@@ -55,10 +70,51 @@ public class Mana : MonoBehaviour
         return false;
     }
 
+    // NOVO: Adicionar Mana Divina
+    public void AdicionarManaDivina(int valor, bool isPlayer)
+    {
+        if (isPlayer)
+        {
+            manaDivinaPlayer += valor;
+        }
+        else
+        {
+            manaDivinaOponente += valor;
+        }
+        AtualizarManaUI();
+    }
+
+    // NOVO: Gastar Mana Divina
+    public bool GastarManaDivina(int valor, bool isPlayer)
+    {
+        if (isPlayer)
+        {
+            if (manaDivinaPlayer >= valor)
+            {
+                manaDivinaPlayer -= valor;
+                AtualizarManaUI();
+                return true;
+            }
+        }
+        else
+        {
+            if (manaDivinaOponente >= valor)
+            {
+                manaDivinaOponente -= valor;
+                AtualizarManaUI();
+                return true;
+            }
+        }
+        return false;
+    }
+
     private void AtualizarManaUI()
     {
         if (textoManaPlayer != null) textoManaPlayer.text = $"Mana: {manaPlayer}";
         if (textoManaOponente != null) textoManaOponente.text = $"Mana: {manaOponente}";
+        // NOVO: Atualiza UI de Mana Divina
+        if (textoManaDivinaPlayer != null) textoManaDivinaPlayer.text = $"Mana Divina: {manaDivinaPlayer}";
+        if (textoManaDivinaOponente != null) textoManaDivinaOponente.text = $"Mana Divina: {manaDivinaOponente}";
     }
 
     public void AdicionarManaPorRaridade(Token.Raridade raridadeToken, string tagDoVencedor, float energiaBuffPercent)

@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro; // Certifique-se de que TMPro está sendo usado para TextMeshProUGUI
-using System.Linq; // Para OrderBy
+using TMPro;
+using System.Linq;
 
 public class Combate : MonoBehaviour
 {
@@ -17,15 +17,23 @@ public class Combate : MonoBehaviour
     [Header("Canvas UI")]
     public GameObject painelDeAcoes; // Para o botão de habilidade especial
     public Button botaoHabilidadeEspecial;
+    public TextMeshProUGUI textoHabilidadeBotao; // Novo para texto do botão de habilidade
+    // NOVO: Botão e texto para deselar carta
+    public Button botaoDeselarCarta;
+    public TextMeshProUGUI textoDeselarCartaBotao;
+
     public GameObject painelDeDetalhes;
-    public Button botaoFecharDetalhes; // Agora o único botão no painel de detalhes
+    public Button botaoFecharDetalhes;
 
     public TextMeshProUGUI textoDano;
     public TextMeshProUGUI textoVida;
     public TextMeshProUGUI textoRaridade;
     public TextMeshProUGUI textoNome;
     public TextMeshProUGUI textoManaCusto;
-    public TextMeshProUGUI textoBuffInfo; // Novo para exibir informações de buff
+    public TextMeshProUGUI textoBuffInfo; // Para exibir informações de buff passivo
+    public TextMeshProUGUI textoHabilidadeInfo; // Novo para exibir detalhes da habilidade ativa
+    // NOVO: Texto para informações de carta selada
+    public TextMeshProUGUI textoSeladoInfo;
     public Image imagemToken;
 
     [HideInInspector] public GameObject tokenAtualSelecionado;
@@ -47,45 +55,88 @@ public class Combate : MonoBehaviour
         painelDeAcoes.SetActive(false);
         painelDeDetalhes.SetActive(false);
 
-        // Inicializa 8 tokens para cada lado nas "mãos"
         GerarTokensIniciais(8);
 
-        // Listener para o botão de habilidade especial
         botaoHabilidadeEspecial.onClick.AddListener(AtivarHabilidadeEspecial);
-        botaoFecharDetalhes.onClick.AddListener(FecharDetalhes); // Certifica-se de que o listener está no lugar
+        botaoFecharDetalhes.onClick.AddListener(FecharDetalhes);
+        // NOVO: Adiciona listener para o botão de deselar
+        botaoDeselarCarta.onClick.AddListener(DeselarCartaSelecionada);
     }
 
-    // Chamado pelo TokenDragDrop para selecionar um token (para detalhes ou habilidade)
     public void SelecionarTokenParaUI(GameObject token)
     {
         tokenAtualSelecionado = token;
         Token tokenScript = tokenAtualSelecionado.GetComponent<Token>();
 
-        // Só mostra painéis se o token estiver no tabuleiro
         if (tokenScript != null && tokenScript.PosicaoNoTab != Token.PosicaoTabuleiro.NaoNoTabuleiro)
         {
-            MostrarDetalhesUI(); // Isso ativa o painelDeDetalhes
+            MostrarDetalhesUI();
 
-            // Lógica para mostrar o botão de habilidade especial (apenas para o player no seu turno E se for um token de Dano)
-            if (tokenAtualSelecionado.CompareTag("Token Player") && turnManager.turnoAtual == TurnManager.Turno.Player && tokenScript.tokenType == Token.TokenType.Dano)
+            // Lógica para mostrar o painel de ações
+            bool isPlayerToken = tokenAtualSelecionado.CompareTag("Token Player");
+            bool isPlayerTurn = turnManager.turnoAtual == TurnManager.Turno.Player;
+
+            if (isPlayerToken && isPlayerTurn)
             {
                 painelDeAcoes.SetActive(true);
-                // Habilita o botão apenas se tiver mana suficiente e a habilidade não estiver já ativada
-                botaoHabilidadeEspecial.interactable = (manaScript.manaPlayer >= tokenScript.custoManaEspecial && !tokenScript.habilidadeAtivada);
+
+                // Habilidade Especial
+                if (tokenScript.tokenType == Token.TokenType.Dano && tokenScript.activeAbilityType != Token.ActiveAbilityType.None)
+                {
+                    botaoHabilidadeEspecial.gameObject.SetActive(true);
+                    textoHabilidadeBotao.text = ObterNomeBotaoHabilidade(tokenScript.activeAbilityType);
+                    // NOVO: Aplica redução de custo de habilidade
+                    float custoReducaoBuff = turnManager.GetTotalAbilityCostReductionBuffPercentage(true);
+                    int custoHabilidadeReal = Mathf.RoundToInt(tokenScript.abilityCost * (1 - (custoReducaoBuff / 100f)));
+                    custoHabilidadeReal = Mathf.Max(0, custoHabilidadeReal); // Garante que o custo não seja negativo
+
+                    botaoHabilidadeEspecial.interactable = (manaScript.manaPlayer >= custoHabilidadeReal && !tokenScript.abilityUsedThisTurn);
+                }
+                else
+                {
+                    botaoHabilidadeEspecial.gameObject.SetActive(false);
+                }
+
+                // NOVO: Botão de Deselar Carta (apenas para tokens Potencial selados)
+                if (tokenScript.raridade == Token.Raridade.Potencial && tokenScript.isSealed)
+                {
+                    botaoDeselarCarta.gameObject.SetActive(true);
+                    textoDeselarCartaBotao.text = $"Deselar ({tokenScript.divineManaCost} Mana Divina)";
+                    botaoDeselarCarta.interactable = (manaScript.manaDivinaPlayer >= tokenScript.divineManaCost);
+                }
+                else
+                {
+                    botaoDeselarCarta.gameObject.SetActive(false);
+                }
+
+                // Se nenhum botão de ação estiver ativo, desativa o painel de ações
+                if (!botaoHabilidadeEspecial.gameObject.activeSelf && !botaoDeselarCarta.gameObject.activeSelf)
+                {
+                    painelDeAcoes.SetActive(false);
+                }
             }
             else
             {
-                painelDeAcoes.SetActive(false); // Esconde se não for para habilidade (oponente, turno errado, ou token de buff)
+                painelDeAcoes.SetActive(false);
             }
         }
         else
         {
-            // Se o token não está no tabuleiro, fecha ambos os painéis
             painelDeDetalhes.SetActive(false);
             painelDeAcoes.SetActive(false);
         }
     }
 
+    private string ObterNomeBotaoHabilidade(Token.ActiveAbilityType type)
+    {
+        switch (type)
+        {
+            case Token.ActiveAbilityType.Damage: return "Usar Habilidade (Dano)";
+            case Token.ActiveAbilityType.Buff: return "Usar Habilidade (Buff)";
+            case Token.ActiveAbilityType.Summon: return "Invocar Carta";
+            default: return "Habilidade";
+        }
+    }
 
     void GerarTokensIniciais(int quantidade)
     {
@@ -104,7 +155,7 @@ public class Combate : MonoBehaviour
 
         foreach (Transform slot in slots)
         {
-            if (slotsScript.SlotEstaLivre(slot)) // Usa a nova verificação de slot livre
+            if (slotsScript.SlotEstaLivre(slot))
             {
                 slotVazio = slot;
                 break;
@@ -113,7 +164,6 @@ public class Combate : MonoBehaviour
 
         if (slotVazio != null)
         {
-            // Pega o buff de sorte do jogador ou oponente
             float luckBuff = turnManager.GetTotalLuckBuffPercentage(paraPlayer);
             GameObject tokenPrefab = EscolherTokenPorChance(luckBuff);
             if (tokenPrefab != null)
@@ -126,9 +176,14 @@ public class Combate : MonoBehaviour
                 Token tokenScript = tokenInstanciado.GetComponent<Token>();
                 if (tokenScript != null)
                 {
-                    tokenScript.gameObject.tag = tagDoDono; // Garante a tag no script
+                    tokenScript.gameObject.tag = tagDoDono;
+                    // NOVO: Se a carta for Potencial, ela vem selada ao ser gerada
+                    if (tokenScript.raridade == Token.Raridade.Potencial)
+                    {
+                        tokenScript.isSealed = true;
+                        Debug.Log($"Token Potencial {tokenScript.nomeDoToken} gerado selado.");
+                    }
                 }
-                // Adiciona o TokenDragDrop se não tiver (muito importante!)
                 if (tokenInstanciado.GetComponent<TokenDragDrop>() == null)
                 {
                     tokenInstanciado.AddComponent<TokenDragDrop>();
@@ -143,20 +198,16 @@ public class Combate : MonoBehaviour
     {
         List<Token> todosTokensScripts = todosOsTokens.Select(go => go.GetComponent<Token>()).ToList();
 
-        // Ajustar chances com base no buff de Sorte
-        // Aumenta a chance de épicas, lendárias, míticas
-        // Diminui a chance de comuns e raras
-        // As porcentagens negativas aqui são para diminuir a chance, mas o totalChance não deve ser negativo
         Dictionary<Token.Raridade, float> chanceModificadores = new Dictionary<Token.Raridade, float>()
         {
-            { Token.Raridade.Comum, -0.015f }, // -1.5%
-            { Token.Raridade.Incomum, -0.01f }, // -1%
-            { Token.Raridade.Raro, -0.005f }, // -0.5%
-            { Token.Raridade.Epico, 0.005f }, // +0.5%
-            { Token.Raridade.Lendario, 0.01f }, // +1%
-            { Token.Raridade.Mitico, 0.015f }, // +1.5%
-            { Token.Raridade.Alter, 0f }, // Sem alteração
-            { Token.Raridade.Potencial, 0f } // Sem alteração
+            { Token.Raridade.Comum, -0.015f },
+            { Token.Raridade.Incomum, -0.01f },
+            { Token.Raridade.Raro, -0.005f },
+            { Token.Raridade.Epico, 0.005f },
+            { Token.Raridade.Lendario, 0.01f },
+            { Token.Raridade.Mitico, 0.015f },
+            { Token.Raridade.Alter, 0f },
+            { Token.Raridade.Potencial, 0.02f } // NOVO: Chance base para Potencial
         };
 
         float totalAdjustedChance = 0f;
@@ -168,19 +219,17 @@ public class Combate : MonoBehaviour
             float modifier = 0;
             if (chanceModificadores.ContainsKey(token.raridade))
             {
-                // Aplica o modificador base multiplicado pela porcentagem de sorte
                 modifier = chanceModificadores[token.raridade] * (luckBuffPercentage / 100f);
             }
             float adjustedChance = baseChance * (1 + modifier);
             
-            // Garante que a chance não seja negativa
             adjustedChance = Mathf.Max(0f, adjustedChance);
             
             adjustedChances.Add((token, adjustedChance));
             totalAdjustedChance += adjustedChance;
         }
 
-        if (totalAdjustedChance <= 0) // Fallback para evitar divisão por zero
+        if (totalAdjustedChance <= 0)
         {
             Debug.LogWarning("Total de chances ajustadas é zero ou negativo. Gerando um token aleatório sem sorte.");
             return todosOsTokens[Random.Range(0, todosOsTokens.Count)];
@@ -196,7 +245,7 @@ public class Combate : MonoBehaviour
                 return item.token.gameObject;
         }
         
-        return null; // Caso não encontre nenhum token (improvável se totalAdjustedChance > 0)
+        return null;
     }
 
     void MostrarDetalhesUI()
@@ -210,21 +259,63 @@ public class Combate : MonoBehaviour
                 textoManaCusto.text = $"Custo: {dados.manaCusto}";
                 textoRaridade.text = $"Raridade: {dados.raridade}";
 
+                // Esconde todos por padrão
+                textoDano.gameObject.SetActive(false);
+                textoVida.gameObject.SetActive(false);
+                textoBuffInfo.gameObject.SetActive(false);
+                textoHabilidadeInfo.gameObject.SetActive(false);
+                textoSeladoInfo.gameObject.SetActive(false); // NOVO
+
                 // Exibir informações baseadas no tipo de token
                 if (dados.tokenType == Token.TokenType.Dano)
                 {
                     textoDano.gameObject.SetActive(true);
                     textoVida.gameObject.SetActive(true);
-                    textoBuffInfo.gameObject.SetActive(false); // Esconde info de buff
                     textoDano.text = $"Dano: {dados.danoBase}";
                     textoVida.text = $"Vida: {dados.vida}";
+
+                    // Informações da habilidade ativa
+                    if (dados.activeAbilityType != Token.ActiveAbilityType.None)
+                    {
+                        textoHabilidadeInfo.gameObject.SetActive(true);
+                        string habilidadeDetalhes = $"Habilidade: {dados.activeAbilityType} (Custo: {dados.abilityCost} Mana)\n";
+                        switch (dados.activeAbilityType)
+                        {
+                            case Token.ActiveAbilityType.Damage:
+                                habilidadeDetalhes += $"  Dano: {dados.abilityDamage}";
+                                break;
+                            case Token.ActiveAbilityType.Buff:
+                                habilidadeDetalhes += "  Buffs:\n";
+                                foreach (var buff in dados.abilityBuffEffects)
+                                {
+                                    habilidadeDetalhes += $"    - {buff.buffType}: +{buff.percentage}%\n";
+                                }
+                                break;
+                            case Token.ActiveAbilityType.Summon:
+                                habilidadeDetalhes += $"  Invoca {dados.numCardsToSummon} cartas aleatórias.";
+                                break;
+                        }
+                        textoHabilidadeInfo.text = habilidadeDetalhes;
+                    }
                 }
                 else if (dados.tokenType == Token.TokenType.Buff)
                 {
-                    textoDano.gameObject.SetActive(false); // Esconde dano
-                    textoVida.gameObject.SetActive(false); // Esconde vida
-                    textoBuffInfo.gameObject.SetActive(true); // Mostra info de buff
-                    textoBuffInfo.text = $"Buff: {dados.buffType} ({dados.buffPercentage}%)";
+                    textoBuffInfo.gameObject.SetActive(true);
+                    textoBuffInfo.text = $"Buff Passivo: {dados.passiveBuffType} ({dados.passiveBuffPercentage}%)";
+                }
+
+                // NOVO: Informações de carta selada (Potencial)
+                if (dados.raridade == Token.Raridade.Potencial)
+                {
+                    textoSeladoInfo.gameObject.SetActive(true);
+                    if (dados.isSealed)
+                    {
+                        textoSeladoInfo.text = $"Estado: Selado\nBuff Selado: {dados.sealedBuffType} (+{dados.sealedBuffPercentage}%)\nCusto para Deselar: {dados.divineManaCost} Mana Divina";
+                    }
+                    else
+                    {
+                        textoSeladoInfo.text = "Estado: Deselado";
+                    }
                 }
 
                 SpriteRenderer spriteRenderer = tokenAtualSelecionado.GetComponent<SpriteRenderer>();
@@ -248,7 +339,7 @@ public class Combate : MonoBehaviour
     public void FecharDetalhes()
     {
         painelDeDetalhes.SetActive(false);
-        painelDeAcoes.SetActive(false); // Fecha o painel de ações junto
+        painelDeAcoes.SetActive(false);
         tokenAtualSelecionado = null;
     }
 
@@ -259,13 +350,21 @@ public class Combate : MonoBehaviour
             Token tokenScript = tokenAtualSelecionado.GetComponent<Token>();
             if (tokenScript != null)
             {
-                // Apenas tokens de Dano podem ter habilidade especial ativada manualmente
-                if (tokenScript.tokenType == Token.TokenType.Dano)
+                if (tokenScript.tokenType == Token.TokenType.Dano && tokenScript.activeAbilityType != Token.ActiveAbilityType.None)
                 {
-                    if (manaScript.GastarManaPlayer(tokenScript.custoManaEspecial))
+                    // NOVO: Aplica redução de custo de habilidade
+                    float custoReducaoBuff = turnManager.GetTotalAbilityCostReductionBuffPercentage(true);
+                    int custoHabilidadeReal = Mathf.RoundToInt(tokenScript.abilityCost * (1 - (custoReducaoBuff / 100f)));
+                    custoHabilidadeReal = Mathf.Max(0, custoHabilidadeReal);
+
+                    if (manaScript.GastarManaPlayer(custoHabilidadeReal))
                     {
-                        tokenScript.habilidadeAtivada = true; // Apenas marca a flag
-                        Debug.Log($"Habilidade especial de {tokenScript.nomeDoToken} ativada! O dano será aplicado no próximo ataque.");
+                        tokenScript.abilityUsedThisTurn = true; // Marca a habilidade como usada
+                        Debug.Log($"Habilidade de {tokenScript.nomeDoToken} ativada! (Custo: {custoHabilidadeReal})");
+
+                        // A lógica da habilidade em si é passada para o TurnManager
+                        turnManager.HandleActiveAbility(tokenScript, tokenAtualSelecionado.transform.parent);
+
                         painelDeAcoes.SetActive(false);
                         FecharDetalhes();
                     }
@@ -274,7 +373,32 @@ public class Combate : MonoBehaviour
                         Debug.Log("Mana insuficiente para usar a habilidade especial.");
                     }
                 } else {
-                    Debug.LogWarning("Tokens de Buff não possuem habilidade especial ativável.");
+                    Debug.LogWarning("Este token não possui uma habilidade ativa ou é um token de buff passivo.");
+                }
+            }
+        }
+    }
+
+    // NOVO: Método para deselar a carta selecionada
+    void DeselarCartaSelecionada()
+    {
+        if (tokenAtualSelecionado != null && tokenAtualSelecionado.CompareTag("Token Player"))
+        {
+            Token tokenScript = tokenAtualSelecionado.GetComponent<Token>();
+            if (tokenScript != null && tokenScript.raridade == Token.Raridade.Potencial && tokenScript.isSealed)
+            {
+                if (manaScript.GastarManaDivina(tokenScript.divineManaCost, true))
+                {
+                    tokenScript.Deselar(); // Chama o método Deselar no script Token
+                    turnManager.RemoverTokenPotencialSelado(tokenScript); // Informa ao TurnManager para remover o buff
+                    Debug.Log($"Carta {tokenScript.nomeDoToken} deselada com sucesso!");
+                    
+                    painelDeAcoes.SetActive(false);
+                    FecharDetalhes();
+                }
+                else
+                {
+                    Debug.Log("Mana Divina insuficiente para deselar esta carta.");
                 }
             }
         }
