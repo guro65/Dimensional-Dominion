@@ -6,7 +6,6 @@ TagManager:
   tags:
   - Token Player
   - Token Oponente
-  - SlotInventario
   layers:
   - Default
   - TransparentFX
