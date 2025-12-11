@@ -81,7 +81,7 @@ public class TurnManager : MonoBehaviour
         {
             if (!tokensJogadosNesteTurnoPlayer.Contains(tokenGO))
                 tokensJogadosNesteTurnoPlayer.Add(tokenGO);
-            
+
             // Adiciona aos buffs passivos ativos se for um token de buff passivo
             if (token.tokenType == Token.TokenType.Buff && !playerActivePassiveBuffTokens.Contains(token))
             {
@@ -312,6 +312,9 @@ public class TurnManager : MonoBehaviour
             int custoHabilidadeReal = Mathf.RoundToInt(token.abilityCost * (1 - (custoReducaoBuff / 100f)));
             custoHabilidadeReal = Mathf.Max(0, custoHabilidadeReal); // Garante que o custo não seja negativo
 
+            // NOVO: Habilidade 'Copy' não é executada aqui, apenas as habilidades copiadas ou originais de dano/buff
+            if (token.activeAbilityType == Token.ActiveAbilityType.Copy) continue;
+
             if (token.CompareTag("Token Player") == isPlayerTurn && token.abilityUsedThisTurn)
             {
                 if (token.activeAbilityType == Token.ActiveAbilityType.Damage)
@@ -354,7 +357,7 @@ public class TurnManager : MonoBehaviour
     {
         bool atacantesSaoPlayer = (turnoAtual == Turno.Player);
         List<Token> atacantes = slotsScript.GetTokensNoTabuleiro(atacantesSaoPlayer);
-        
+
         float forcaBuffPercent = GetTotalStrengthBuffPercentage(atacantesSaoPlayer);
 
         atacantes = atacantes.OrderBy(t => t.PosicaoNoTab == Token.PosicaoTabuleiro.Tras ? 1 : 0)
@@ -365,10 +368,11 @@ public class TurnManager : MonoBehaviour
 
         foreach (Token atacante in atacantes)
         {
-            if (atacante.tokenType == Token.TokenType.Buff) { // Tokens de Buff Passivo não atacam
+            if (atacante.tokenType == Token.TokenType.Buff)
+            { // Tokens de Buff Passivo não atacam
                 continue;
             }
-            // NOVO: Tokens Potencial selados não atacam
+            // Tokens Potencial selados não atacam
             if (atacante.raridade == Token.Raridade.Potencial && atacante.isSealed)
             {
                 Debug.Log($"Token Potencial {atacante.nomeDoToken} está selado, pulando ataque.");
@@ -381,11 +385,18 @@ public class TurnManager : MonoBehaviour
                 continue;
             }
 
+            // NOVO: Reseta a redução cumulativa da passiva Adaptação
+            if (atacante.passiveAbilityType == Token.PassiveAbilityType.Adaptacao)
+            {
+                atacante.currentAdaptacaoReduction = 0f;
+            }
+
             Token alvo = null;
             Transform slotAtacante = atacante.transform.parent;
-            if (slotAtacante == null) {
-                 Debug.LogWarning($"Atacante {atacante.nomeDoToken} não tem pai (slot). Ignorando ataque.");
-                 continue;
+            if (slotAtacante == null)
+            {
+                Debug.LogWarning($"Atacante {atacante.nomeDoToken} não tem pai (slot). Ignorando ataque.");
+                continue;
             }
 
             // Lógica de alvo (primeiro na frente, depois atrás na mesma coluna)
@@ -424,7 +435,7 @@ public class TurnManager : MonoBehaviour
                     }
                 }
             }
-            
+
             if (alvo != null && alvo.estaVivo)
             {
                 atacante.Atacar(alvo, forcaBuffPercent); // Passa o buff de força
@@ -485,13 +496,18 @@ public class TurnManager : MonoBehaviour
         playerTemporaryBuffs.Clear();
         oponenteTemporaryBuffs.Clear();
 
-        // Reseta a flag de habilidade usada para todos os tokens
-        foreach (Token token in slotsScript.GetTokensNoTabuleiro(true))
+        // Reseta a flag de habilidade usada e NOVO: Restaura a habilidade copiada
+        List<Token> todosOsTokens = slotsScript.GetTokensNoTabuleiro(true);
+        todosOsTokens.AddRange(slotsScript.GetTokensNoTabuleiro(false));
+
+        foreach (Token token in todosOsTokens)
         {
-            token.abilityUsedThisTurn = false;
-        }
-        foreach (Token token in slotsScript.GetTokensNoTabuleiro(false))
-        {
+            // NOVO: Se o token usou a habilidade e era uma cópia, restaura a original
+            if (token.abilityUsedThisTurn && token.isAbilityCopied)
+            {
+                token.RestaurarHabilidadeOriginal();
+            }
+
             token.abilityUsedThisTurn = false;
         }
     }
@@ -522,7 +538,7 @@ public class TurnManager : MonoBehaviour
     public void HandleActiveAbility(Token tokenScript, Transform casterSlot)
     {
         bool isPlayer = tokenScript.CompareTag("Token Player");
-        
+
         switch (tokenScript.activeAbilityType)
         {
             case Token.ActiveAbilityType.Damage:
@@ -545,6 +561,9 @@ public class TurnManager : MonoBehaviour
                         Debug.LogWarning($"Carta de invocação {tokenScript.name} não tem cartas para invocar na lista 'Summonable Cards'.");
                     }
                 }
+                break;
+            case Token.ActiveAbilityType.Copy:
+                // A lógica de cópia é executada imediatamente em Combate.cs ou na IA, não precisa de agendamento.
                 break;
             case Token.ActiveAbilityType.None:
             default:
@@ -600,16 +619,20 @@ public class TurnManager : MonoBehaviour
         bool agiu = false;
         foreach (var acao in acoesDisponiveis)
         {
-            try {
+            try
+            {
                 acao.Invoke();
                 agiu = true;
-                break; 
-            } catch (System.Exception e) {
+                break;
+            }
+            catch (System.Exception e)
+            {
                 Debug.LogError($"Erro ao tentar executar ação do oponente: {e.Message}");
             }
         }
 
-        if (!agiu) {
+        if (!agiu)
+        {
             PassarTurnoAposDelay();
         }
     }
@@ -671,18 +694,46 @@ public class TurnManager : MonoBehaviour
         List<Token> oponenteTokensNoTab = slotsScript.GetTokensNoTabuleiro(false)
                                              .Where(t => t.tokenType == Token.TokenType.Dano && t.activeAbilityType != Token.ActiveAbilityType.None && !t.abilityUsedThisTurn)
                                              .ToList();
+
+        // NOVO: Prioriza o uso da habilidade de cópia (se disponível e houver um alvo decente)
+        Token tokenParaCopia = oponenteTokensNoTab.FirstOrDefault(t => t.activeAbilityType == Token.ActiveAbilityType.Copy);
+        if (tokenParaCopia != null)
+        {
+            // Lógica de AI para Copy: Tenta copiar uma habilidade de dano/buff/summon de um token do jogador
+            Token alvoParaCopia = slotsScript.GetTokensNoTabuleiro(true)
+                .Where(t => t.activeAbilityType != Token.ActiveAbilityType.None && t.activeAbilityType != Token.ActiveAbilityType.Copy && t.tokenType == Token.TokenType.Dano)
+                .FirstOrDefault();
+
+            if (alvoParaCopia != null)
+            {
+                int custoHabilidadeReal = Mathf.RoundToInt(tokenParaCopia.abilityCost * (1 - (custoReducaoBuff / 100f)));
+                custoHabilidadeReal = Mathf.Max(0, custoHabilidadeReal);
+
+                if (manaScript.GastarManaOponente(custoHabilidadeReal))
+                {
+                    tokenParaCopia.CopiarHabilidade(alvoParaCopia);
+                    tokenParaCopia.abilityUsedThisTurn = true;
+                    Debug.Log($"Oponente ativou habilidade COPIA com {tokenParaCopia.nomeDoToken}, copiando {alvoParaCopia.nomeDoToken}.");
+                    Invoke("OponenteFazAcao", Random.Range(minDelayOponenteAcao, maxDelayOponenteAcao));
+                    return;
+                }
+            }
+            // Se não conseguiu copiar, remove o token de cópia para considerar outras habilidades
+            oponenteTokensNoTab.Remove(tokenParaCopia);
+        }
+
+        // Executa habilidades normais (Damage, Buff, Summon) ou a habilidade copiada
         if (oponenteTokensNoTab.Any())
         {
             Token tokenParaHabilidade = oponenteTokensNoTab[Random.Range(0, oponenteTokensNoTab.Count)];
-            
+
             int custoHabilidadeReal = Mathf.RoundToInt(tokenParaHabilidade.abilityCost * (1 - (custoReducaoBuff / 100f)));
             custoHabilidadeReal = Mathf.Max(0, custoHabilidadeReal);
 
-            // Simula a ativação da habilidade para o AI
             if (manaScript.GastarManaOponente(custoHabilidadeReal))
             {
                 tokenParaHabilidade.abilityUsedThisTurn = true;
-                Debug.Log($"Oponente ativou habilidade especial de {tokenParaHabilidade.nomeDoToken} (Custo: {custoHabilidadeReal}).");
+                Debug.Log($"Oponente ativou habilidade especial de {tokenParaHabilidade.nomeDoToken} (Tipo: {tokenParaHabilidade.activeAbilityType}, Custo: {custoHabilidadeReal}).");
                 HandleActiveAbility(tokenParaHabilidade, tokenParaHabilidade.transform.parent); // Informa ao TurnManager
 
                 Invoke("OponenteFazAcao", Random.Range(minDelayOponenteAcao, maxDelayOponenteAcao));
@@ -713,7 +764,7 @@ public class TurnManager : MonoBehaviour
             Token tokenParaDeselar = oponenteSealedTokens[Random.Range(0, oponenteSealedTokens.Count)];
             if (manaScript.GastarManaDivina(tokenParaDeselar.divineManaCost, false))
             {
-                tokenParaDeselar.Deselar();
+                tokenParaDeselar.Deselar(); // Chama o método Deselar no script Token
                 RemoverTokenPotencialSelado(tokenParaDeselar); // Remove da lista de buffs selados
                 Debug.Log($"Oponente deselou {tokenParaDeselar.nomeDoToken} por {tokenParaDeselar.divineManaCost} Mana Divina.");
                 Invoke("OponenteFazAcao", Random.Range(minDelayOponenteAcao, maxDelayOponenteAcao));

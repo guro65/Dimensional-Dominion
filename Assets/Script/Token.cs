@@ -60,7 +60,8 @@ public class Token : MonoBehaviour
         None,   // Nenhuma habilidade ativa
         Damage, // Dano direto (como já existe)
         Buff,   // Concede buffs temporários
-        Summon  // Invoca outra carta
+        Summon, // Invoca outra carta
+        Copy    // NOVO: Copia a habilidade de um token alvo
     }
     [Header("Habilidade Ativa")]
     public ActiveAbilityType activeAbilityType = ActiveAbilityType.None;
@@ -77,10 +78,10 @@ public class Token : MonoBehaviour
         public BuffType buffType;
         [Range(0, 100)] public float percentage;
     }
-    public List<BuffEffect> abilityBuffEffects;
+    public List<BuffEffect> abilityBuffEffects = new List<BuffEffect>();
 
     // Parâmetros para Habilidade de Invocar (se ActiveAbilityType for Summon)
-    public List<GameObject> summonableCards; // Lista de prefabs de cartas que podem ser invocadas
+    public List<GameObject> summonableCards = new List<GameObject>(); // Lista de prefabs de cartas que podem ser invocadas
     public int numCardsToSummon = 1; // Quantidade de cartas a serem invocadas
 
     // --- NOVO: Propriedades para a raridade Potencial ---
@@ -89,6 +90,29 @@ public class Token : MonoBehaviour
     public BuffType sealedBuffType = BuffType.None; // Tipo de buff que a carta selada oferece
     [Range(0, 100)] public float sealedBuffPercentage = 0; // Porcentagem do buff selado
     public int divineManaCost = 0; // Custo de Mana Divina para deselar
+
+    // --- NOVO: Variáveis para Habilidade de Cópia ---
+    [Header("Habilidade de Cópia")]
+    [HideInInspector] public bool isAbilityCopied = false; // Indica se a habilidade atual é uma cópia
+    private ActiveAbilityType originalActiveAbilityType;
+    private int originalAbilityCost;
+    private int originalAbilityDamage;
+    private int originalNumCardsToSummon;
+    private List<BuffEffect> originalAbilityBuffEffects = new List<BuffEffect>();
+    private List<GameObject> originalSummonableCards = new List<GameObject>();
+
+    // --- NOVO: Sistema de Habilidades Passivas ---
+    public enum PassiveAbilityType
+    {
+        None,
+        Adaptacao // Redução de Dano Cumulativa
+    }
+
+    [Header("Habilidade Passiva")]
+    public PassiveAbilityType passiveAbilityType = PassiveAbilityType.None;
+    [Range(0, 100)] public float adaptacaoBaseReduction = 5f; // Redução base por golpe (5%)
+    [Range(0, 100)] public float adaptacaoMaxReduction = 50f; // Redução máxima (50%)
+    [HideInInspector] public float currentAdaptacaoReduction = 0f; // Redução acumulada atual
 
     private Mana manaScript;
     private TurnManager turnManager;
@@ -115,13 +139,16 @@ public class Token : MonoBehaviour
             float danoGeralBuff = 0f;
             if (tokenType == TokenType.Dano)
             {
+                // Note: TurnManager.GetTotalDamageBuffPercentage precisa ser um método existente
                 danoGeralBuff = turnManager.GetTotalDamageBuffPercentage(CompareTag("Token Player"));
             }
-            
+
             int danoEfetivo = Mathf.RoundToInt(danoBase * (1 + (forcaBuffPercent / 100f) + (danoGeralBuff / 100f)));
             Debug.Log($"{nomeDoToken} atacou {alvo.nomeDoToken} causando {danoEfetivo} de dano (com {forcaBuffPercent}% Força Buff e {danoGeralBuff}% Dano Geral Buff).");
             alvo.ReceberDano(danoEfetivo, this);
-        } else {
+        }
+        else
+        {
             Debug.LogWarning($"{nomeDoToken} tentou atacar mas o alvo é nulo ou o atacante não está vivo.");
         }
     }
@@ -150,8 +177,26 @@ public class Token : MonoBehaviour
 
     public void ReceberDano(int quantidade, Token atacante)
     {
-        vida -= quantidade;
-        Debug.Log($"{nomeDoToken} recebeu {quantidade} de dano. Vida restante: {vida}");
+        // --- NOVO: Aplica Habilidade Passiva "Adaptação" ---
+        float danoRecebido = quantidade;
+        if (passiveAbilityType == PassiveAbilityType.Adaptacao)
+        {
+            // Aplica a redução acumulada atual
+            danoRecebido = danoRecebido * (1f - (currentAdaptacaoReduction / 100f));
+
+            // Aumenta a redução acumulada para o próximo golpe
+            currentAdaptacaoReduction += adaptacaoBaseReduction;
+            currentAdaptacaoReduction = Mathf.Min(currentAdaptacaoReduction, adaptacaoMaxReduction);
+
+            Debug.Log($"{nomeDoToken} (Adaptação) reduziu o dano de {quantidade} para {Mathf.RoundToInt(danoRecebido)} (Redução Atual: {currentAdaptacaoReduction}%).");
+        }
+
+        int danoFinal = Mathf.RoundToInt(danoRecebido);
+        if (danoFinal < 0) danoFinal = 0; // Garante que o dano não seja negativo
+
+        vida -= danoFinal;
+        Debug.Log($"{nomeDoToken} recebeu {danoFinal} de dano. Vida restante: {vida}");
+
         if (vida <= 0)
         {
             if (manaScript != null && atacante != null)
@@ -188,7 +233,7 @@ public class Token : MonoBehaviour
         }
         // O TokenDragDrop também precisa saber que o token foi derrotado para não tentar manipulá-lo
         TokenDragDrop dragDrop = GetComponent<TokenDragDrop>();
-        if(dragDrop != null) dragDrop.SetDefeated(); // Desativa o script de drag/drop
+        if (dragDrop != null) dragDrop.SetDefeated(); // Desativa o script de drag/drop
         Destroy(gameObject);
     }
 
@@ -198,5 +243,64 @@ public class Token : MonoBehaviour
         isSealed = false;
         Debug.Log($"{nomeDoToken} foi deselado!");
         // A lógica de remoção do buff selado será tratada no TurnManager
+    }
+
+    // NOVO: Método para fazer a Cópia da Habilidade
+    public void CopiarHabilidade(Token alvo)
+    {
+        // 1. Se for a primeira cópia, salva os atributos originais
+        if (!isAbilityCopied)
+        {
+            originalActiveAbilityType = activeAbilityType;
+            originalAbilityCost = abilityCost;
+            originalAbilityDamage = abilityDamage;
+            originalNumCardsToSummon = numCardsToSummon;
+
+            // Cópia profunda das listas de buffs e invocáveis
+            originalAbilityBuffEffects.Clear();
+            if (abilityBuffEffects != null) originalAbilityBuffEffects.AddRange(abilityBuffEffects);
+            originalSummonableCards.Clear();
+            if (summonableCards != null) originalSummonableCards.AddRange(summonableCards);
+        }
+
+        // 2. Aplica os atributos do alvo (Garantindo que as listas não sejam nulas no alvo)
+        activeAbilityType = alvo.activeAbilityType;
+        abilityCost = alvo.abilityCost;
+        abilityDamage = alvo.abilityDamage;
+        numCardsToSummon = alvo.numCardsToSummon;
+
+        abilityBuffEffects.Clear();
+        if (alvo.abilityBuffEffects != null) abilityBuffEffects.AddRange(alvo.abilityBuffEffects);
+        summonableCards.Clear();
+        if (alvo.summonableCards != null) summonableCards.AddRange(alvo.summonableCards);
+
+        // 3. Marca como copiado
+        isAbilityCopied = true;
+
+        Debug.Log($"{nomeDoToken} copiou a habilidade '{activeAbilityType}' de {alvo.nomeDoToken}.");
+    }
+
+    // NOVO: Método para restaurar a Habilidade Original (Chamado pelo TurnManager)
+    public void RestaurarHabilidadeOriginal()
+    {
+        if (isAbilityCopied)
+        {
+            activeAbilityType = originalActiveAbilityType;
+            abilityCost = originalAbilityCost;
+            abilityDamage = originalAbilityDamage;
+            numCardsToSummon = originalNumCardsToSummon;
+
+            abilityBuffEffects.Clear();
+            abilityBuffEffects.AddRange(originalAbilityBuffEffects);
+            originalAbilityBuffEffects.Clear(); // Limpa backup após restauração
+
+            summonableCards.Clear();
+            summonableCards.AddRange(originalSummonableCards);
+            originalSummonableCards.Clear(); // Limpa backup após restauração
+
+            isAbilityCopied = false;
+
+            Debug.Log($"{nomeDoToken} restaurou sua habilidade original '{originalActiveAbilityType}'.");
+        }
     }
 }

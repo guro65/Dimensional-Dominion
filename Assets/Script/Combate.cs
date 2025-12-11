@@ -134,6 +134,7 @@ public class Combate : MonoBehaviour
             case Token.ActiveAbilityType.Damage: return "Usar Habilidade (Dano)";
             case Token.ActiveAbilityType.Buff: return "Usar Habilidade (Buff)";
             case Token.ActiveAbilityType.Summon: return "Invocar Carta";
+            case Token.ActiveAbilityType.Copy: return "Copiar Habilidade"; // NOVO
             default: return "Habilidade";
         }
     }
@@ -189,7 +190,9 @@ public class Combate : MonoBehaviour
                     tokenInstanciado.AddComponent<TokenDragDrop>();
                 }
             }
-        } else {
+        }
+        else
+        {
             Debug.LogWarning($"Não há slots vazios na mão do {(paraPlayer ? "Player" : "Oponente")} para gerar token inicial.");
         }
     }
@@ -222,9 +225,9 @@ public class Combate : MonoBehaviour
                 modifier = chanceModificadores[token.raridade] * (luckBuffPercentage / 100f);
             }
             float adjustedChance = baseChance * (1 + modifier);
-            
+
             adjustedChance = Mathf.Max(0f, adjustedChance);
-            
+
             adjustedChances.Add((token, adjustedChance));
             totalAdjustedChance += adjustedChance;
         }
@@ -244,7 +247,7 @@ public class Combate : MonoBehaviour
             if (randomValue <= acumulado)
                 return item.token.gameObject;
         }
-        
+
         return null;
     }
 
@@ -294,8 +297,36 @@ public class Combate : MonoBehaviour
                             case Token.ActiveAbilityType.Summon:
                                 habilidadeDetalhes += $"  Invoca {dados.numCardsToSummon} cartas aleatórias.";
                                 break;
+                            case Token.ActiveAbilityType.Copy: // NOVO
+                                habilidadeDetalhes = $"Habilidade: Copiar (Custo: {dados.abilityCost} Mana)";
+                                if (dados.isAbilityCopied)
+                                {
+                                    habilidadeDetalhes += $"\n  (Copiado: {dados.activeAbilityType})";
+                                }
+                                else
+                                {
+                                    habilidadeDetalhes += "\n  Copia a habilidade ativa de um token inimigo.";
+                                }
+                                break;
                         }
+                        // NOVO: Adiciona info da passiva se for Adaptacao
+                        if (dados.passiveAbilityType == Token.PassiveAbilityType.Adaptacao)
+                        {
+                            habilidadeDetalhes += $"\nPassiva: Adaptação\n  Redução de dano cumulativa de +{dados.adaptacaoBaseReduction}% (Máx: {dados.adaptacaoMaxReduction}%)";
+                        }
+
                         textoHabilidadeInfo.text = habilidadeDetalhes;
+                    }
+                    else if (dados.passiveAbilityType != Token.PassiveAbilityType.None)
+                    {
+                        // Exibe a passiva mesmo se não houver habilidade ativa
+                        textoHabilidadeInfo.gameObject.SetActive(true);
+                        string passivaDetalhes = "";
+                        if (dados.passiveAbilityType == Token.PassiveAbilityType.Adaptacao)
+                        {
+                            passivaDetalhes = $"Passiva: Adaptação\n  Redução de dano cumulativa de +{dados.adaptacaoBaseReduction}% (Máx: {dados.adaptacaoMaxReduction}%)";
+                        }
+                        textoHabilidadeInfo.text = passivaDetalhes;
                     }
                 }
                 else if (dados.tokenType == Token.TokenType.Buff)
@@ -352,19 +383,57 @@ public class Combate : MonoBehaviour
             {
                 if (tokenScript.tokenType == Token.TokenType.Dano && tokenScript.activeAbilityType != Token.ActiveAbilityType.None)
                 {
-                    // NOVO: Aplica redução de custo de habilidade
+                    // Aplica redução de custo de habilidade
                     float custoReducaoBuff = turnManager.GetTotalAbilityCostReductionBuffPercentage(true);
                     int custoHabilidadeReal = Mathf.RoundToInt(tokenScript.abilityCost * (1 - (custoReducaoBuff / 100f)));
                     custoHabilidadeReal = Mathf.Max(0, custoHabilidadeReal);
 
-                    if (manaScript.GastarManaPlayer(custoHabilidadeReal))
+                    if (manaScript.manaPlayer >= custoHabilidadeReal)
                     {
-                        tokenScript.abilityUsedThisTurn = true; // Marca a habilidade como usada
-                        Debug.Log($"Habilidade de {tokenScript.nomeDoToken} ativada! (Custo: {custoHabilidadeReal})");
+                        // --- NOVO: Lógica de Habilidade de Cópia ---
+                        if (tokenScript.activeAbilityType == Token.ActiveAbilityType.Copy)
+                        {
+                            // Lógica de seleção de alvo: Seleciona o primeiro token inimigo com habilidade ativa (e não de cópia).
+                            Token alvoParaCopia = slotsScript.GetTokensNoTabuleiro(false)
+                                .Where(t => t.activeAbilityType != Token.ActiveAbilityType.None && t.activeAbilityType != Token.ActiveAbilityType.Copy && t.tokenType == Token.TokenType.Dano)
+                                .FirstOrDefault();
 
-                        // A lógica da habilidade em si é passada para o TurnManager
-                        turnManager.HandleActiveAbility(tokenScript, tokenAtualSelecionado.transform.parent);
+                            if (alvoParaCopia != null)
+                            {
+                                if (manaScript.GastarManaPlayer(custoHabilidadeReal))
+                                {
+                                    tokenScript.CopiarHabilidade(alvoParaCopia);
+                                    tokenScript.abilityUsedThisTurn = true; // A cópia em si é o uso da habilidade deste turno
+                                    Debug.Log($"Habilidade {tokenScript.nomeDoToken} ativada: COPIAR. Habilidade copiada é {tokenScript.activeAbilityType} de {alvoParaCopia.nomeDoToken}.");
+                                }
+                                else
+                                {
+                                    Debug.Log("Mana insuficiente para usar a habilidade de cópia.");
+                                }
+                            }
+                            else
+                            {
+                                Debug.Log("Não há alvo válido para copiar a habilidade.");
+                            }
+                        }
+                        // --- FIM NOVO: Lógica de Habilidade de Cópia ---
+                        else // Habilidades normais (Damage, Buff, Summon, ou a habilidade que foi copiada)
+                        {
+                            if (manaScript.GastarManaPlayer(custoHabilidadeReal))
+                            {
+                                tokenScript.abilityUsedThisTurn = true; // Marca a habilidade como usada
+                                Debug.Log($"Habilidade de {tokenScript.nomeDoToken} ativada! (Tipo: {tokenScript.activeAbilityType}, Custo: {custoHabilidadeReal})");
 
+                                // A lógica da habilidade em si é passada para o TurnManager
+                                turnManager.HandleActiveAbility(tokenScript, tokenAtualSelecionado.transform.parent);
+                            }
+                            else
+                            {
+                                Debug.Log("Mana insuficiente para usar a habilidade especial.");
+                            }
+                        }
+
+                        // Fechamento de UI deve ocorrer após a tentativa de uso
                         painelDeAcoes.SetActive(false);
                         FecharDetalhes();
                     }
@@ -372,7 +441,9 @@ public class Combate : MonoBehaviour
                     {
                         Debug.Log("Mana insuficiente para usar a habilidade especial.");
                     }
-                } else {
+                }
+                else
+                {
                     Debug.LogWarning("Este token não possui uma habilidade ativa ou é um token de buff passivo.");
                 }
             }
@@ -392,7 +463,7 @@ public class Combate : MonoBehaviour
                     tokenScript.Deselar(); // Chama o método Deselar no script Token
                     turnManager.RemoverTokenPotencialSelado(tokenScript); // Informa ao TurnManager para remover o buff
                     Debug.Log($"Carta {tokenScript.nomeDoToken} deselada com sucesso!");
-                    
+
                     painelDeAcoes.SetActive(false);
                     FecharDetalhes();
                 }
